@@ -1,0 +1,15 @@
+<% if(passport_settings.enable_captcha){ %>
+<div class="mb-2">
+  <div>
+    <label class="form-label" for="code">验证码</label>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <div class="flex-fill">
+      <input class="form-control" id="code" name="captcha_code" type="text" autocomplete="off" size="<%=passport_settings.captcha_config.size %>" required>
+    </div>
+    <div class="cursor-pointer flex-auto d-flex justify-content-center" onclick="refreshCode()">
+      <img id="code-img" src="<%= '/passport/code.png?t=' + Date.now() %>">
+    </div>
+  </div>
+</div>
+<% } %>

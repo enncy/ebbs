@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title>邮箱验证</title>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+
+  <div class="container d-flex p-3 mx-auto flex-column" style="max-width: 800px;">
+    <div class="mb-auto"></div>
+    <div class="mt-5">
+      <div class="alert alert-<%= locals.alert_type %>" role="alert">
+        <h1><%= locals.title %></h1>
+        <p><%= locals.subtitle %></p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

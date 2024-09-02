@@ -1,0 +1,7 @@
+<% if(locals?.redirect?.url){ %>
+<script>
+  setTimeout(() => {
+    window.location.href = '<%=locals.redirect.url%>';
+  }, parseInt('<%=locals.redirect.timeout%>') * 1000);
+</script>
+<% } %>

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "outDir": "./lib",
+    "rootDir": "./",
+    "declaration": true,
+    "target": "ES2015",
+    "module": "commonjs",
+    "types": ["node"],
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "paths": {
+      "ebbs": ["./src/index.ts"]
+    }
+  },
+  "include": ["./src/**/*.ts", "./plugins/**/*.ts", "./src/**/*.ejs"],
+  "exclude": ["./lib/**/*"]
+}

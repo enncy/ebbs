@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title>注册</title>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+
+  <div class="container" style="max-width: 600px;">
+    <form class="mt-5" method="POST">
+
+      <h3><%=locals.settings.name%> - 注册</h3>
+      <hr>
+
+      <div class="mb-2">
+        <div>
+          <label class="form-label" for="email">邮箱</label>
+        </div>
+        <div>
+          <input class="form-control" id="email" name="email" type="email" autocomplete="email" required value="<%=locals.body.email%>">
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <div class="d-flex align-items-center ">
+          <label class="form-label" for="password">密码</label>
+        </div>
+        <div>
+          <input class="form-control" id="password" name="password" type="password" autocomplete="off" required placeholder="" value="<%=locals.body.password%>">
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <div class="d-flex align-items-center ">
+          <label class="form-label" for="confirm_password">重复密码</label>
+        </div>
+        <div>
+          <input class="form-control" id="confirm_password" name="confirm_password" type="password" autocomplete="off" required placeholder="">
+        </div>
+      </div>
+
+
+      <%- include('./captcha.code.input.ejs') %>
+
+
+      <div class="w-100 mt-3">
+        <button type="submit" class="btn btn-primary w-100">注册</button>
+      </div>
+    </form>
+
+    <p class="mt-3">
+      已有账号？
+      <a href="/passport/login">登录</a>
+    </p>
+
+
+    <% if(locals.validator_error || locals.error){  %>
+    <div class="alert alert-danger mt-3" role="alert">
+      <%=locals.validator_error%><%=locals.error%>
+    </div>
+    <% } %>
+
+    <% if(locals.success){  %>
+    <div class="alert alert-success mt-3" role="alert">
+      <%=locals.success %>
+    </div>
+    <% } %>
+  </div>
+
+
+  <script>
+    function refreshCode() {
+      var img = document.querySelector('#code-img');
+      img.src = '/passport/code.png?t=' + Date.now()
+      console.log(img.src);
+    }
+  </script>
+</body>
+
+</html>
