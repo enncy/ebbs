@@ -23,13 +23,13 @@ export class UserEmailLoginSuccessEvent extends CancellableEvent {
 }
 
 export class UserRegisterEvent extends CancellableEvent {
-    constructor(public email: string, public ip: string) {
+    constructor(public account: string, public email: string, public ip: string) {
         super()
     }
 }
 
 export class UserCreateEvent extends CancellableEvent {
-    constructor(public email: string, public ip: string) {
+    constructor(public account: string, public email: string, public ip: string) {
         super()
     }
 }
@@ -44,11 +44,14 @@ export const PassportPlugin = definePlugin({
         captcha_config: {
             size: 4, noise: 3, color: true, background: '#cdcdcd', ignoreChars: '0OoLlIi1'
         },
+        account_min_length: 4,
+        account_max_length: 32,
         password_min_length: 6,
         password_max_length: 32
     },
     apis: {
         '/login': 'post',
+        '/logout': 'get',
         '/register': 'post',
         '/reset-password': 'post',
         '/reset-password-feedback': 'post',
@@ -112,9 +115,17 @@ export const PassportPlugin = definePlugin({
         }
     }
 
-    const commonValidator: Record<string, Validator> = {
-        email: { type: 'string', required: true, match: /^\w+(-+.\w+)*@\w+(-.\w+)*.\w+(-.\w+)*$/, error_of_invalid_match: i18n('passport.validator.invalid_email') },
-        password: { type: 'string', required: true, min_length: plugin.settings.get('password_min_length'), max_length: plugin.settings.get('password_max_length'), error_of_invalid_length: i18n('passport.validator.invalid_passport') },
+    const commonValidator = {
+        // 账号只能包含字母、数字、下划线
+        account: {
+            type: 'string', name: i18n('_dict.account'), required: true,
+            min_length: plugin.settings.get('account_min_length'),
+            max_length: plugin.settings.get('account_max_length'),
+            match: /^[a-zA-Z0-9_]+$/,
+            error_of_invalid_length: i18n('passport.validator.invalid_account_length'), error_of_invalid_match: i18n('passport.validator.invalid_account')
+        } as Validator,
+        email: { type: 'string', name: i18n('_dict.email'), required: true, match: /^\w+(-+.\w+)*@\w+(-.\w+)*.\w+(-.\w+)*$/, error_of_invalid_match: i18n('passport.validator.invalid_email') } as Validator,
+        password: { type: 'string', name: i18n('_dict.password'), required: true, min_length: plugin.settings.get('password_min_length'), max_length: plugin.settings.get('password_max_length'), error_of_invalid_length: i18n('passport.validator.invalid_passport') } as Validator,
     }
 
     /**
@@ -147,8 +158,12 @@ export const PassportPlugin = definePlugin({
         }
     })
 
+    plugin.api('/logout', async (req, res) => {
+        plugin.sessions.remove(req, 'user')
+        res.redirect(plugin.api('/login'))
+    })
 
-    plugin.api('/login', plugin.validator((req) => req.body, commonValidator, loginView), async (req, res) => {
+    plugin.api('/login', plugin.validator((req) => req.body, {email: commonValidator.email, password: commonValidator.password}, loginView), async (req, res) => {
         await checkCaptchaCode(req, res, loginView)
         if (res.headersSent) {
             return
@@ -162,7 +177,6 @@ export const PassportPlugin = definePlugin({
         if (pre_e.isCancelled()) {
             return res.send(await loginView.render(req, { error: pre_e.reason }))
         }
-
 
         const user = await UserDocument.login(email, password, ip)
         if (!user) {
@@ -228,6 +242,7 @@ export const PassportPlugin = definePlugin({
             return
         }
 
+        const account = req.body.account?.trim().toLowerCase()
         const email = req.body.email?.trim().toLowerCase()
         const password = req.body.password?.trim()
         const confirm_password = req.body.confirm_password?.trim()
@@ -235,7 +250,17 @@ export const PassportPlugin = definePlugin({
         if (password !== confirm_password) {
             return res.send(await registerView.render(req, { error: i18n('passport.register.confirm_password_not_match') }))
         }
-        const e = plugin.emit(new UserRegisterEvent(email, ip))
+
+        if (await UserDocument.findOne({ email })) {
+            return res.send(await registerView.render(req, { error: i18n('passport.register.email_exists') }))
+        }
+
+        if (await UserDocument.findOne({ account })) {
+            return res.send(await registerView.render(req, { error: i18n('passport.register.account_exists') }))
+        }
+
+
+        const e = plugin.emit(new UserRegisterEvent(account, email, ip))
         if (e.isCancelled()) {
             return res.send(await registerView.render(req, { error: e.reason }))
         }
@@ -243,7 +268,7 @@ export const PassportPlugin = definePlugin({
         try {
             await sendEmail(email, {
                 subject: i18n('passport.register.confirm_email.subject'),
-                html: await emailTemplateView.render(req, { subject: i18n('passport.register.confirm_email.message'), link: createEmailConfirmUrl(email, password) })
+                html: await emailTemplateView.render(req, { subject: i18n('passport.register.confirm_email.message'), link: createEmailConfirmUrl(account, email, password) })
             })
         } catch (e) {
             plugin.logger.error(e)
@@ -259,21 +284,22 @@ export const PassportPlugin = definePlugin({
         if (!sign) {
             return res.status(404).end()
         }
+        const account = req.query.account?.toString().trim()
         const email = req.query.email?.toString().trim()
         const password = req.query.password?.toString().trim()
         const ip = clientIp(req) || ''
-        if (!email || !password) {
+        if (!account || !email || !password) {
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
         }
-        if (SignUtils.verify({ email, password }, sign) === false) {
+        if (SignUtils.verify({ account, email, password }, sign) === false) {
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
         }
 
-        const nickname = email
-        const e = plugin.emit(new UserCreateEvent(email, ip))
+        const e = plugin.emit(new UserCreateEvent(account, email, ip))
         if (e.isCancelled()) {
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: e.reason }))
         }
+
         const original = await UserDocument.findByEmailAndPassword(email, password)
         if (original) {
             if (original.password === UserDocument.signPassword(password, original.password_salt)) {
@@ -282,7 +308,7 @@ export const PassportPlugin = definePlugin({
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.email_exists') }))
         }
         try {
-            await UserDocument.create(nickname, email, password, ip)
+            await UserDocument.create(account, email, password, ip)
         } catch (e) {
             plugin.logger.error(e);
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: e.message }))
@@ -310,8 +336,8 @@ function createCaptcha(config?: captcha.ConfigObject) {
 /**
  * 创建邮箱验证链接 
  */
-function createEmailConfirmUrl(email: string, password: string) {
-    return baseUrl(`/${PassportPlugin.id}/confirm-email?&email=${email}&password=${password}&sign=` + SignUtils.sign({ email, password }))
+function createEmailConfirmUrl(account: string, email: string, password: string) {
+    return baseUrl(`/${PassportPlugin.id}/confirm-email?account=${account}&email=${email}&password=${password}&sign=` + SignUtils.sign({ account, email, password }))
 }
 
 /**

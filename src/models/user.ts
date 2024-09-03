@@ -4,6 +4,7 @@ import { SignUtils } from "src/utils"
 
 export class UserDocument {
     uid: string
+    account: string
     nickname: string
     email: string
     password: string
@@ -23,13 +24,14 @@ export class UserDocument {
         fans: number
     }
 
-    public static create(nickname: string, email: string, passport: string, ip: string) {
+    public static create(account: string, email: string, passport: string, ip: string) {
         const now = Date.now()
         const salt = uuid()
         const signed_password = SignUtils.sign({ passport, salt })
         return UserModel.create({
             uid: uuid(),
-            nickname: nickname,
+            account: account,
+            nickname: '',
             email: email,
             password: signed_password,
             password_salt: salt,
@@ -45,12 +47,15 @@ export class UserDocument {
         })
     }
 
-    public static async findByEmail(email: string) {
-        return await UserModel.findOne({ email })
+    public static async findOne(or: { email?: string, account?: string }) {
+        if (!or.email && !or.account) {
+            return null
+        }
+        return await UserModel.findOne(or)
     }
 
     public static async findByEmailAndPassword(email: string, password: string) {
-        const user = await this.findByEmail(email)
+        const user = await this.findOne({ email })
         if (!user) {
             return null
         }
@@ -93,10 +98,11 @@ export class UserDocument {
 export const UserModel = defineModel<UserDocument>('User',
     {
         uid: { type: String, unique: true, required: true, index: true },
+        account: { type: String, unique: true, required: true, index: true },
         email: { type: String, unique: true, required: true, index: true },
         password: { type: String, required: true },
         password_salt: { type: String, required: true },
-        nickname: { type: String, required: true, index: true, default: '' },
+        nickname: { type: String, index: true, default: '' },
         profile: { type: String, default: '' },
         avatar: { type: String, default: '' },
         permissions: { type: [String], default: [] },

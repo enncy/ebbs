@@ -70,6 +70,10 @@ export type ValidatorErrorHandler = (req: Request, res: Response) => any
 export interface Validator {
     type: 'string' | 'number' | 'boolean'
     /**
+     * 参数名
+     */
+    name?: string
+    /**
      * 是否必须
      * type 为 string 时有效
      */
@@ -164,8 +168,8 @@ export abstract class Plugin<
         this._logger_instance = this._logger_instance || winston.createLogger({
             format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston.format.json()),
             transports: [
-                new winston.transports.File({ filename: resolve('logs', this.config.id, 'error.log'), level: 'error' }),
-                new winston.transports.File({ filename: resolve('logs', this.config.id, 'output.log'), }),
+                new winston.transports.File({ filename: resolve('logs', this.config.id, 'error.log'), level: 'error', lazy: true }),
+                new winston.transports.File({ filename: resolve('logs', this.config.id, 'console.log'), lazy: true }),
             ]
         });
         return this._logger_instance
@@ -288,7 +292,7 @@ export abstract class Plugin<
                 const validator = validators[key]
                 let custom_error_msg = ''
                 const onInvalid = validator.onInvalid || (async (req, res) => {
-                    const err = custom_error_msg || validator.error_of_invalid || i18n('_internal.plugin.validator.invalid', { param_name: key })
+                    const err = custom_error_msg || validator.error_of_invalid || i18n('_internal.plugin.validator.invalid', { param_name: validator.name || key })
                     if (error_view) {
                         res.send(await error_view.render(req, { validator_error: err }))
                     } else {
@@ -296,10 +300,10 @@ export abstract class Plugin<
                     }
                 })
 
-                const onTypeError = validator.onInvalid || ((req, res) => {
-                    const err = validator.error_of_invalid_type || i18n('_internal.plugin.validator.type_error', { param_name: key })
+                const onTypeError = validator.onInvalid || (async (req, res) => {
+                    const err = validator.error_of_invalid_type || i18n('_internal.plugin.validator.type_error', { param_name: validator.name || key })
                     if (error_view) {
-                        error_view.render(req, { validator_error: err })
+                        res.send(await error_view.render(req, { validator_error: err }))
                     } else {
                         res.send(err)
                     }
@@ -316,11 +320,11 @@ export abstract class Plugin<
                         return onInvalid(req, res)
                     }
                     if ((validator.min_length && value.length < validator.min_length) || (validator.max_length && value.length > validator.max_length)) {
-                        custom_error_msg = i18n('_internal.plugin.validator.invalid_length', { param_name: key, min_length: validator.min_length, max_length: validator.max_length })
+                        custom_error_msg = i18n('_internal.plugin.validator.invalid_length', { param_name: validator.name || key, min_length: validator.min_length, max_length: validator.max_length })
                         return onInvalid(req, res)
                     }
                     if (validator.match && !validator.match.test(value)) {
-                        custom_error_msg = i18n('_internal.plugin.validator.invalid_match', { param_name: key })
+                        custom_error_msg = i18n('_internal.plugin.validator.invalid_match', { param_name: validator.name || key })
                         return onInvalid(req, res)
                     }
                 }
@@ -331,7 +335,7 @@ export abstract class Plugin<
                         return onInvalid(req, res)
                     }
                     if ((validator.min && value < validator.min) || (validator.max && value > validator.max)) {
-                        custom_error_msg = i18n('_internal.plugin.validator.invalid_number', { param_name: key, min: validator.min, max: validator.max })
+                        custom_error_msg = i18n('_internal.plugin.validator.invalid_number', { param_name: validator.name || key, min: validator.min, max: validator.max })
                         return onInvalid(req, res)
                     }
                 }
