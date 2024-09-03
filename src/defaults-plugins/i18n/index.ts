@@ -21,3 +21,6 @@ export function i18n(key: keyof LangKeys, placeholders: Record<string, any> = {}
     return text.replace(/\{\{(\w+)\}\}/g, (_, p1) => placeholders[p1] || 'undefined')
 }
 
+export function i18ns(...keys: (keyof LangKeys)[]) {
+    return keys.map((key) => i18n(key))
+}

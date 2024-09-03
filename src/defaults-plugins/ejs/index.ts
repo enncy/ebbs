@@ -1,7 +1,8 @@
 import { definePlugin } from "src/core/plugins";
 import settings from "../../../ejs.settings.json";
 import { ViewRenderEvent } from "src/events/page";
-import { i18n } from "../i18n";
+import { i18n, i18ns } from "../i18n";
+import { Request } from "express";
 
 definePlugin({
     id: 'ejs-locals-export',
@@ -9,10 +10,15 @@ definePlugin({
 }, (plugin) => {
     plugin.on(ViewRenderEvent, (e) => {
         e.data = e.data || {}
-        Reflect.set(e.data, 'i18n', i18n)
-        Reflect.set(e.data, 'settings', settings)
-        Reflect.set(e.data, 'body', e.req.body)
-        Reflect.set(e.data, 'params', e.req.params)
-        Reflect.set(e.data, 'query', e.req.query)
+        bindEJSBaseVariables(e.req, e.data)
     })
 })
+
+export function bindEJSBaseVariables(req: Request, data: any) {
+    Reflect.set(data, 'i18n', i18n)
+    Reflect.set(data, 'i18ns', i18ns)
+    Reflect.set(data, 'settings', settings)
+    Reflect.set(data, 'body', req.body)
+    Reflect.set(data, 'params', req.params)
+    Reflect.set(data, 'query', req.query)
+}

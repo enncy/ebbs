@@ -39,7 +39,7 @@ export async function sendEmail(email: string, opts: { subject: string; text?: s
     if (config.host === 'localhost') {
         throw new Error(i18n('email.config.smtp_host_unset'))
     }
-    const e = EmailPlugin.emit(new EmailSendEvent(email, opts))
+    const e = await EmailPlugin.emit(new EmailSendEvent(email, opts))
     if (e.isCancelled()) {
         throw new Error(e.reason || i18n('email.send.is_cancelled'))
     }

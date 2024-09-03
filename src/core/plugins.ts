@@ -26,9 +26,9 @@ export type PluginExport<Sessions extends Record<string, any> = any, Settings ex
 }
 
 export class PluginContext {
-    private readonly listeners: Map<Plugin, { event: EventConstructor, executor: (e: Event) => void }[]> = new Map()
+    private readonly listeners: Map<Plugin, { event: EventConstructor, executor: (e: Event) => void | Promise<void> }[]> = new Map()
     private readonly pages: Map<Plugin, Page[]> = new Map()
-    on<T extends EventConstructor>(plugin: Plugin, event: T, executor: (e: T extends { new(...args: any[]): infer E; } ? E : unknown) => void): void {
+    on<T extends EventConstructor>(plugin: Plugin, event: T, executor: (e: T extends { new(...args: any[]): infer E; } ? E : unknown) => void | Promise<void>): void {
         if (!this.listeners.has(plugin)) {
             this.listeners.set(plugin, [])
         }
@@ -37,11 +37,11 @@ export class PluginContext {
             reg.push({ event: event, executor })
         }
     }
-    emit(plugin: Plugin, event: Event) {
+    async emit(plugin: Plugin, event: Event) {
         const listeners = Array.from(this.listeners.values()).flat().filter((listener) => listener.event === event.constructor)
         if (listeners.length) {
             for (const listener of listeners) {
-                listener.executor(event)
+                await listener.executor(event)
             }
         }
         return event
@@ -195,15 +195,15 @@ export abstract class Plugin<
      * @param event  插件事件 
      * @param executor   事件执行器  
      */
-    on<T extends { new(...args: any[]): Event; }>(event: T, executor: (e: T extends { new(...args: any[]): infer E; } ? E : unknown) => void): void {
+    on<T extends { new(...args: any[]): Event; }>(event: T, executor: (e: T extends { new(...args: any[]): infer E; } ? E : unknown) => void): void | Promise<void> {
         this.context.on(this, event, executor)
     }
     /**
      * 调用事件
      * @param event  事件实例 
      */
-    emit<T extends Event>(event: T) {
-        this.context.emit(this, event)
+    async emit<T extends Event>(event: T): Promise<T> {
+        await this.context.emit(this, event)
         // 记录事件
         if (this.logging_events.find((e) => event instanceof e)) {
             this.logger.info(event.toString())
@@ -228,15 +228,15 @@ export abstract class Plugin<
      * @param data 渲染数据
      * @returns {PluginView} 返回渲染后的html字符串
      */
-    definedView(path: string, data_provider?: (req: Request) => Record<string, any> | void): PluginView {
+    definedView(path: string, data_provider?: (req: Request) => Record<string, any> | void | Promise<Record<string, any> | void>): PluginView {
         const _this = this
         return {
             async render(req, extra_data) {
                 fs.mkdirSync(resolve('views', _this.id), { recursive: true })
                 const view_path = resolve('views', _this.id, path.toString())
-                const data = Object.assign(data_provider ? data_provider(req) ?? {} : {}, extra_data)
+                const data = Object.assign(data_provider ? await data_provider(req) ?? {} : {}, extra_data)
                 const e = new ViewRenderEvent(req, view_path, data)
-                _this.emit(e)
+                await _this.emit(e)
                 return EJS.renderFile(view_path, e.data, {
                     root: process.cwd(),
                 })
