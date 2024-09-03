@@ -3,7 +3,7 @@
 
 <head>
   <%- include('/views/header') %>
-  <title>邮箱验证</title>
+  <title><%=locals.settings.name%> - <%= i18n('_dict_.register_confirm_email') %></title>
 </head>
 
 <body>
@@ -15,7 +15,7 @@
       <div class="alert alert-<%= locals.alert_type %>" role="alert">
         <h1><%= locals.title %></h1>
         <p><%= locals.subtitle %></p>
-        <p><a href="/passport/login">返回登录</a></p>
+        <p><a href="/passport/login"><%= i18n('_dict_.login') %></a></p>
       </div>
     </div>
   </div> 

@@ -8,26 +8,36 @@
       </a>
 
       <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-        <li><a href="#" class="nav-link px-2 link-secondary"><%=locals.settings.name%></a></li>
-        <li><a href="#" class="nav-link px-2 link-body-emphasis">Inventory</a></li>
-        <li><a href="#" class="nav-link px-2 link-body-emphasis">Customers</a></li>
-        <li><a href="#" class="nav-link px-2 link-body-emphasis">Products</a></li>
+        <li><a href="/" class="nav-link px-2 link-secondary"><%=locals.settings.name%></a></li>
       </ul>
- 
+
       <div class="dropdown text-end">
-       
+        <% if(locals.user){ %>
+
         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle">
+          <span><%= locals.user.account || 'undefined' %></span> <img src="<%= locals.user.avatar || '/default_avatar.png' %>" alt="<%= locals.user.account %>" width="32" height="32" class="rounded-circle">
         </a>
         <ul class="dropdown-menu text-small">
-          <li><a class="dropdown-item" href="#">New project...</a></li>
-          <li><a class="dropdown-item" href="#">Settings</a></li>
-          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><a class="dropdown-item" href="/user/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
+          <li><a class="dropdown-item" href="#"><%= i18n('_dict_.personal_setting') %></a></li>
+          <li><a class="dropdown-item" href="#"><%= i18n('_dict_.notify') %></a></li>
+          <li><a class="dropdown-item" href="#"><%= i18n('_dict_.draft') %></a></li>
           <li>
             <hr class="dropdown-divider">
           </li>
-          <li><a class="dropdown-item" href="#">Sign out</a></li>
+          <li><a class="dropdown-item" href="/passport/logout"><%= i18n('_dict_.logout') %></a></li>
         </ul>
+        <% }else{ %>
+        <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <span>
+            <%= i18n('_dict_.unregister') %>
+          </span>
+        </a>
+        <ul class="dropdown-menu text-small">
+          <li><a class="dropdown-item" href="/passport/login"><%= i18n('_dict_.login') %></a></li>
+          <li><a class="dropdown-item" href="/passport/register"><%= i18n('_dict_.register') %></a></li>
+        </ul>
+        <% } %>
       </div>
     </div>
   </div>

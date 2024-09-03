@@ -3,7 +3,7 @@
 
 <head>
   <%- include('/views/header') %>
-  <title>登录</title>
+  <title><%=locals.settings.name%> - <%= i18n('_dict_.login') %></title>
 </head>
 
 <body>
@@ -14,12 +14,12 @@
     <form class="mt-5" method="POST">
 
 
-      <h3><%=locals.settings.name%> - 登录</h3>
+      <h3><%=locals.settings.name%> - <%= i18n('_dict_.login') %></h3>
       <hr>
 
       <div class="mb-2">
         <div>
-          <label class="form-label" for="email">邮箱</label>
+          <label class="form-label" for="email"><%= i18n('_dict_.email') %></label>
         </div>
         <div>
           <input class="form-control" id="email" name="email" type="email" autocomplete="email" required value="<%=locals.body.email%>">
@@ -29,10 +29,10 @@
       <div class="mb-2">
         <div class="d-flex align-items-center ">
           <div class="flex-fill">
-            <label class="form-label" for="password">密码</label>
+            <label class="form-label" for="password"><%= i18n('_dict_.password') %></label>
           </div>
           <div class="flex-auto">
-            <a href="/passport/reset-password">忘记密码?</a>
+            <a href="/passport/reset-password"><%= i18n('_dict_.forgot_password') %>?</a>
           </div>
         </div>
         <div>
@@ -43,13 +43,13 @@
       <%- include('./captcha.code.input.ejs') %>
 
       <div class="w-100 mt-3">
-        <button type="submit" class="btn btn-primary w-100">登录</button>
+        <button type="submit" class="btn btn-primary w-100"><%= i18n('_dict_.login') %></button>
       </div>
     </form>
 
     <p class="mt-3">
-      未注册？
-      <a href="/passport/register">立即注册</a>
+      <%= i18n('_dict_.no_account') %>？
+      <a href="/passport/register"><%= i18n('_dict_.register_now') %> </a>
     </p>
 
     <% if(locals.validator_error || locals.error){  %>
@@ -74,7 +74,7 @@
       console.log(img.src);
     }
   </script> 
-  
+
   <%- include('./redirect.ejs') %>
 </body>
 

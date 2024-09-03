@@ -2,7 +2,6 @@ import { definePlugin } from "src/core/plugins";
 import nodemailer from 'nodemailer';
 import { CancellableEvent, Event } from "src/core/interfaces";
 import { i18n } from "../i18n";
-import JSONTransport from "nodemailer/lib/json-transport";
 
 export class EmailSendEvent extends CancellableEvent {
     constructor(public email: string, public opts: { subject: string; text?: string; html?: string }) {

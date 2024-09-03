@@ -216,7 +216,9 @@ export abstract class Plugin<
      * @param page 页面配置
      */
     definePage(page: Page): void {
-        page.path = page.path instanceof RegExp ? page.path : this.baseUrl(page.path)
+        if (!page.custom_path) {
+            page.path = this.baseUrl(page.path)
+        }
         this.context.definePage(this, page)
     }
     /**
@@ -292,7 +294,7 @@ export abstract class Plugin<
                 const validator = validators[key]
                 let custom_error_msg = ''
                 const onInvalid = validator.onInvalid || (async (req, res) => {
-                    const err = custom_error_msg || validator.error_of_invalid || i18n('_internal.plugin.validator.invalid', { param_name: validator.name || key })
+                    const err = custom_error_msg || validator.error_of_invalid || i18n('_internal_.plugin.validator.invalid', { param_name: validator.name || key })
                     if (error_view) {
                         res.send(await error_view.render(req, { validator_error: err }))
                     } else {
@@ -301,7 +303,7 @@ export abstract class Plugin<
                 })
 
                 const onTypeError = validator.onInvalid || (async (req, res) => {
-                    const err = validator.error_of_invalid_type || i18n('_internal.plugin.validator.type_error', { param_name: validator.name || key })
+                    const err = validator.error_of_invalid_type || i18n('_internal_.plugin.validator.type_error', { param_name: validator.name || key })
                     if (error_view) {
                         res.send(await error_view.render(req, { validator_error: err }))
                     } else {
@@ -320,11 +322,11 @@ export abstract class Plugin<
                         return onInvalid(req, res)
                     }
                     if ((validator.min_length && value.length < validator.min_length) || (validator.max_length && value.length > validator.max_length)) {
-                        custom_error_msg = i18n('_internal.plugin.validator.invalid_length', { param_name: validator.name || key, min_length: validator.min_length, max_length: validator.max_length })
+                        custom_error_msg = i18n('_internal_.plugin.validator.invalid_length', { param_name: validator.name || key, min_length: validator.min_length, max_length: validator.max_length })
                         return onInvalid(req, res)
                     }
                     if (validator.match && !validator.match.test(value)) {
-                        custom_error_msg = i18n('_internal.plugin.validator.invalid_match', { param_name: validator.name || key })
+                        custom_error_msg = i18n('_internal_.plugin.validator.invalid_match', { param_name: validator.name || key })
                         return onInvalid(req, res)
                     }
                 }
@@ -335,7 +337,7 @@ export abstract class Plugin<
                         return onInvalid(req, res)
                     }
                     if ((validator.min && value < validator.min) || (validator.max && value > validator.max)) {
-                        custom_error_msg = i18n('_internal.plugin.validator.invalid_number', { param_name: validator.name || key, min: validator.min, max: validator.max })
+                        custom_error_msg = i18n('_internal_.plugin.validator.invalid_number', { param_name: validator.name || key, min: validator.min, max: validator.max })
                         return onInvalid(req, res)
                     }
                 }

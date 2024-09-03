@@ -118,14 +118,14 @@ export const PassportPlugin = definePlugin({
     const commonValidator = {
         // 账号只能包含字母、数字、下划线
         account: {
-            type: 'string', name: i18n('_dict.account'), required: true,
+            type: 'string', name: i18n('_dict_.account'), required: true,
             min_length: plugin.settings.get('account_min_length'),
             max_length: plugin.settings.get('account_max_length'),
             match: /^[a-zA-Z0-9_]+$/,
             error_of_invalid_length: i18n('passport.validator.invalid_account_length'), error_of_invalid_match: i18n('passport.validator.invalid_account')
         } as Validator,
-        email: { type: 'string', name: i18n('_dict.email'), required: true, match: /^\w+(-+.\w+)*@\w+(-.\w+)*.\w+(-.\w+)*$/, error_of_invalid_match: i18n('passport.validator.invalid_email') } as Validator,
-        password: { type: 'string', name: i18n('_dict.password'), required: true, min_length: plugin.settings.get('password_min_length'), max_length: plugin.settings.get('password_max_length'), error_of_invalid_length: i18n('passport.validator.invalid_passport') } as Validator,
+        email: { type: 'string', name: i18n('_dict_.email'), required: true, match: /^\w+(-+.\w+)*@\w+(-.\w+)*.\w+(-.\w+)*$/, error_of_invalid_match: i18n('passport.validator.invalid_email') } as Validator,
+        password: { type: 'string', name: i18n('_dict_.password'), required: true, min_length: plugin.settings.get('password_min_length'), max_length: plugin.settings.get('password_max_length'), error_of_invalid_length: i18n('passport.validator.invalid_passport') } as Validator,
     }
 
     /**
@@ -216,10 +216,10 @@ export const PassportPlugin = definePlugin({
             return
         }
         const password = req.body.password?.trim().toLowerCase()
-        const confirm_password = req.body.confirm_password?.trim().toLowerCase()
+        const repeat_password = req.body.repeat_password?.trim().toLowerCase()
 
-        if (password !== confirm_password) {
-            return res.send(await resetPasswordFeedbackView.render(req, { error: i18n('passport.reset.confirm_password_not_match') }))
+        if (password !== repeat_password) {
+            return res.send(await resetPasswordFeedbackView.render(req, { error: i18n('passport.reset.repeat_password_not_match') }))
         }
 
         const email = req.query.email?.toString().trim()
@@ -245,10 +245,10 @@ export const PassportPlugin = definePlugin({
         const account = req.body.account?.trim().toLowerCase()
         const email = req.body.email?.trim().toLowerCase()
         const password = req.body.password?.trim()
-        const confirm_password = req.body.confirm_password?.trim()
+        const repeat_password = req.body.repeat_password?.trim()
         const ip = clientIp(req) || ''
-        if (password !== confirm_password) {
-            return res.send(await registerView.render(req, { error: i18n('passport.register.confirm_password_not_match') }))
+        if (password !== repeat_password) {
+            return res.send(await registerView.render(req, { error: i18n('passport.register.repeat_password_not_match') }))
         }
 
         if (await UserDocument.findOne({ email })) {
