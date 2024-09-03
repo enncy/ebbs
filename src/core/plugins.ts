@@ -162,7 +162,7 @@ export abstract class Plugin<
       */
     get logger() {
         this._logger_instance = this._logger_instance || winston.createLogger({
-            format: winston.format.combine(winston.format.json(), winston.format.timestamp({ 'alias': 'time', format: 'YYYY-MM-DD HH:mm:ss' })),
+            format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston.format.json()),
             transports: [
                 new winston.transports.File({ filename: resolve('logs', this.config.id, 'error.log'), level: 'error' }),
                 new winston.transports.File({ filename: resolve('logs', this.config.id, 'output.log'), }),
