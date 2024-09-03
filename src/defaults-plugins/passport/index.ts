@@ -8,22 +8,28 @@ import { i18n } from "../i18n";
 import { baseUrl, SignUtils } from "src/utils";
 import { ViewRenderEvent } from "src/events/page";
 
-export class UserEmailLoginEvent extends CancellableEvent {
-    constructor(public user: UserDocument) {
+
+export class UserPreEmailLoginEvent extends CancellableEvent {
+    constructor(public email: string, public ip: string) {
+        super()
+    }
+}
+
+
+export class UserEmailLoginSuccessEvent extends CancellableEvent {
+    constructor(public email: string, public ip: string) {
         super()
     }
 }
 
 export class UserRegisterEvent extends CancellableEvent {
-    cancel_reason: string = ''
-    constructor(public nickname: string, public email: string, public password: string) {
+    constructor(public email: string, public ip: string) {
         super()
     }
 }
 
 export class UserCreateEvent extends CancellableEvent {
-    cancel_reason: string = ''
-    constructor(public nickname: string, public email: string, public password: string) {
+    constructor(public email: string, public ip: string) {
         super()
     }
 }
@@ -48,16 +54,9 @@ export const PassportPlugin = definePlugin({
         '/reset-password-feedback': 'post',
         '/code.png': 'get',
         '/confirm-email': 'get'
-    }
+    },
+    logging_events: [UserPreEmailLoginEvent, UserEmailLoginSuccessEvent, UserRegisterEvent, UserCreateEvent]
 }, (plugin) => {
-
-    plugin.on(ViewRenderEvent, e => {
-        e.data = e.data || {}
-        Object.assign(e.data, {
-            user: plugin.sessions.get(e.req, 'user'),
-            passport_settings: plugin.settings.all(),
-        })
-    })
 
     const loginView = plugin.definedView('login.ejs', (req) => {
         bindCaptcha(req)
@@ -148,36 +147,6 @@ export const PassportPlugin = definePlugin({
         }
     })
 
-    plugin.api('/confirm-email', async (req, res) => {
-        const sign = req.query.sign?.toString().trim()
-        if (!sign) {
-            return res.status(404).end()
-        }
-        const email = req.query.email?.toString().trim()
-        const password = req.query.password?.toString().trim()
-        if (!email || !password) {
-            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
-        }
-        if (SignUtils.verify({ email, password }, sign) === false) {
-            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
-        }
-        const nickname = email
-        const e = plugin.emit(new UserCreateEvent(nickname, email, password))
-        if (e.isCancelled()) {
-            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: e.cancel_reason }))
-        }
-        const original = await UserDocument.findByEmail(email)
-        if (original) {
-            if (original.password === password) {
-                return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'success', title: i18n('passport.register.confirm_email_success'), subtitle: i18n('passport.register.success_message') }))
-            }
-            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.email_exists') }))
-        }
-        const user = await UserDocument.create(nickname, email, password)
-        plugin.sessions.set(req, 'user', user)
-        res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'success', title: i18n('passport.register.confirm_email_success'), subtitle: i18n('passport.register.success_message') }))
-    })
-
 
     plugin.api('/login', plugin.validator((req) => req.body, commonValidator, loginView), async (req, res) => {
         await checkCaptchaCode(req, res, loginView)
@@ -187,12 +156,21 @@ export const PassportPlugin = definePlugin({
 
         const email = req.body.email?.trim().toLowerCase()
         const password = req.body.password?.trim()
-        const user = await UserModel.findOne({ email, password })
+        const ip = clientIp(req) || ''
+
+        const pre_e = plugin.emit(new UserPreEmailLoginEvent(email, ip))
+        if (pre_e.isCancelled()) {
+            return res.send(await loginView.render(req, { error: pre_e.reason }))
+        }
+
+
+        const user = await UserDocument.login(email, password, ip)
         if (!user) {
             return res.send(await loginView.render(req, { error: i18n('passport.login.email_login_failed') }))
         }
 
-        const e = plugin.emit(new UserEmailLoginEvent(user))
+
+        const e = plugin.emit(new UserEmailLoginSuccessEvent(email, ip))
         if (e.notCancelled()) {
             plugin.sessions.set(req, 'user', user)
             return res.send(await loginView.render(req, { success: i18n('passport.login.email_login_success'), redirect: { url: '/', timeout: 2 } }))
@@ -212,7 +190,7 @@ export const PassportPlugin = definePlugin({
                 html: await emailTemplateView.render(req, { subject: i18n('passport.reset.password.email.message'), link: createResetPasswordUrl(email) })
             })
         } catch (e) {
-            console.error(e)
+            plugin.logger.error(e)
             return res.send(await resetPasswordView.render(req, { error: i18n('passport.reset.password.email_send_error', { error_message: e.message }) }))
         }
         return res.send(await resetPasswordView.render(req, { success: i18n('passport.reset.password.email_sended') }))
@@ -251,15 +229,15 @@ export const PassportPlugin = definePlugin({
         }
 
         const email = req.body.email?.trim().toLowerCase()
-        const nickname = req.body.nickname?.trim()
         const password = req.body.password?.trim()
         const confirm_password = req.body.confirm_password?.trim()
+        const ip = clientIp(req) || ''
         if (password !== confirm_password) {
             return res.send(await registerView.render(req, { error: i18n('passport.register.confirm_password_not_match') }))
         }
-        const e = plugin.emit(new UserRegisterEvent(nickname, email, password))
+        const e = plugin.emit(new UserRegisterEvent(email, ip))
         if (e.isCancelled()) {
-            return res.send(await registerView.render(req, { error: e.cancel_reason }))
+            return res.send(await registerView.render(req, { error: e.reason }))
         }
 
         try {
@@ -268,13 +246,59 @@ export const PassportPlugin = definePlugin({
                 html: await emailTemplateView.render(req, { subject: i18n('passport.register.confirm_email.message'), link: createEmailConfirmUrl(email, password) })
             })
         } catch (e) {
-            console.error(e)
+            plugin.logger.error(e)
             return res.send(await registerView.render(req, { error: i18n('passport.register.confirm_email_send_error', { error_message: e.message }) }))
         }
         return res.send(await registerView.render(req, { success: i18n('passport.register.confirm_email_sended') }))
     })
+
+
+
+    plugin.api('/confirm-email', async (req, res) => {
+        const sign = req.query.sign?.toString().trim()
+        if (!sign) {
+            return res.status(404).end()
+        }
+        const email = req.query.email?.toString().trim()
+        const password = req.query.password?.toString().trim()
+        const ip = clientIp(req) || ''
+        if (!email || !password) {
+            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
+        }
+        if (SignUtils.verify({ email, password }, sign) === false) {
+            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
+        }
+
+        const nickname = email
+        const e = plugin.emit(new UserCreateEvent(email, ip))
+        if (e.isCancelled()) {
+            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: e.reason }))
+        }
+        const original = await UserDocument.findByEmailAndPassword(email, password)
+        if (original) {
+            if (original.password === UserDocument.signPassword(password, original.password_salt)) {
+                return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'success', title: i18n('passport.register.confirm_email_success'), subtitle: i18n('passport.register.success_message') }))
+            }
+            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.email_exists') }))
+        }
+        try {
+            await UserDocument.create(nickname, email, password, ip)
+        } catch (e) {
+            plugin.logger.error(e);
+            return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: e.message }))
+        }
+        res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'success', title: i18n('passport.register.confirm_email_success'), subtitle: i18n('passport.register.success_message') }))
+    })
+
 })
 
+PassportPlugin.on(ViewRenderEvent, e => {
+    e.data = e.data || {}
+    Object.assign(e.data, {
+        user: PassportPlugin.sessions.get(e.req, 'user'),
+        passport_settings: PassportPlugin.settings.all(),
+    })
+})
 
 /**
  * 创建验证码
@@ -295,4 +319,11 @@ function createEmailConfirmUrl(email: string, password: string) {
  */
 function createResetPasswordUrl(email: string) {
     return baseUrl(`/${PassportPlugin.id}/reset-password-feedback?email=${email}&sign=` + SignUtils.sign({ email }))
+}
+
+/**
+ * 获取客户端IP
+ */
+export function clientIp(req: Request) {
+    return req.headers?.['x-forwarded-for']?.toString() || req.socket.remoteAddress;
 }

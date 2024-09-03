@@ -42,7 +42,7 @@ export async function sendEmail(email: string, opts: { subject: string; text?: s
     }
     const e = EmailPlugin.emit(new EmailSendEvent(email, opts))
     if (e.isCancelled()) {
-        throw new Error(e.cancel_reason || i18n('email.send.is_cancelled'))
+        throw new Error(e.reason || i18n('email.send.is_cancelled'))
     }
     const transporter = nodemailer.createTransport(config);
     return await transporter.sendMail({

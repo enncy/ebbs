@@ -10,6 +10,7 @@ export interface PluginConfig<Sessions extends Record<string, any> = any, Settin
     sessions?: Sessions;
     settings?: Settings;
     apis?: Apis
+    logging_events?: EventConstructor[]
 }
 export interface Page<R = {}> {
     path: string | RegExp;
@@ -20,20 +21,36 @@ export interface PluginView {
     render(req: Request, extra_data?: Record<string, any>): string | Promise<string>
 }
 
+export type EventConstructor = { new(...args: any[]): Event; }
 export class Event {
+    toString() {
+        const keys = Object.keys(this)
+        const values = keys.map((key) => {
+            return `${key}=${(this as any)[key]}`
+        })
+        return `[${this.constructor.name}]: ` + + values.join(' ')
+    }
 }
 
 export class CancellableEvent extends Event {
-    cancel_reason: string = ''
+    reason: string = ''
     private cancelled = false
-    cancel() {
+    cancel(reason?: string) {
         this.cancelled = true
+        this.reason = reason || ''
     }
     isCancelled() {
         return this.cancelled
     }
     notCancelled() {
         return !this.cancelled
+    }
+    toString() {
+        const keys = Object.keys(this).filter((key) => key !== 'cancelled' && key !== 'reason')
+        const values = keys.map((key) => {
+            return `${key}=${(this as any)[key]}`
+        })
+        return `[${this.constructor.name}]: ${this.isCancelled() ? '[cancelled] reason=' + this.reason : ''} ` + values.join(' ')
     }
 }
 

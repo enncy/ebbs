@@ -1,7 +1,7 @@
 import { Application, Request, RequestHandler, Response } from "express";
 import path, { resolve } from "path";
 import mongoose, { Model, Schema, SchemaOptions, SchemaTypeOptions } from "mongoose";
-import { DefaultsConstructorValue, Event, Page, PluginConfig, PluginView } from './interfaces';
+import { DefaultsConstructorValue, Event, EventConstructor, Page, PluginConfig, PluginView } from './interfaces';
 import chalk from 'chalk';
 import { globSync } from "glob";
 import fs from 'fs';
@@ -9,9 +9,9 @@ import EJS from 'ejs';
 import { ViewRenderEvent } from "../events/page";
 import { i18n } from "../defaults-plugins/i18n";
 import defaultsDeep from 'lodash/defaultsDeep';
+import winston, { Logger } from 'winston';
 
 
-type EventConstructor = { new(...args: any[]): Event; }
 
 export type PluginExport<Sessions extends Record<string, any> = any, Settings extends Record<string, any> = any, Apis extends Record<string, any> = any> = {
     id: string;
@@ -145,10 +145,6 @@ export abstract class Plugin<
      */
     public name: string;
     /**
-     * 插件配置
-     */
-    public config: PluginConfig<Sessions, Settings, Apis>
-    /**
      * 插件版本
      */
     public version?: string;
@@ -160,9 +156,30 @@ export abstract class Plugin<
      * 插件优先级，值越小越优先，默认为0
      */
     public priority?: number;
-    private _setting_cache: Record<string, any> | undefined
+    /**
+      * 插件日志
+      * 懒加载日志，只有在调用时才会创建
+      */
+    get logger() {
+        this._logger_instance = this._logger_instance || winston.createLogger({
+            format: winston.format.combine(winston.format.json(), winston.format.timestamp({ 'alias': 'time', format: 'YYYY-MM-DD HH:mm:ss' })),
+            transports: [
+                new winston.transports.File({ filename: resolve('logs', this.config.id, 'error.log'), level: 'error' }),
+                new winston.transports.File({ filename: resolve('logs', this.config.id, 'output.log'), }),
+            ]
+        });
+        return this._logger_instance
+    }
 
-    constructor(private context: PluginContext) { }
+    /**
+     * 记录在日志的事件
+     */
+    public logging_events: EventConstructor[] = []
+
+    private _setting_cache: Record<string, any> | undefined
+    private _logger_instance: Logger
+
+    constructor(private context: PluginContext, public config: PluginConfig<Sessions, Settings, Apis>) { }
 
     /**
      * 插件加载时执行
@@ -183,6 +200,10 @@ export abstract class Plugin<
      */
     emit<T extends Event>(event: T) {
         this.context.emit(this, event)
+        // 记录事件
+        if (this.logging_events.find((e) => event instanceof e)) {
+            this.logger.info(event.toString())
+        }
         return event
     }
     /**
@@ -375,12 +396,12 @@ export function definePlugin<Sessions extends Record<string, any> = any, Setting
 
     const plugin = class extends Plugin {
         constructor() {
-            super(context)
-            this.config = config
+            super(context, config)
             this.id = config.id
             this.name = config.name
             this.version = config.version
             this.description = config.description
+            this.logging_events = config.logging_events || []
             this.onload = onload
         }
     }
