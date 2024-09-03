@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%> - <%= locals.title %> %></title>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+
+  <div class="container d-flex p-3 mx-auto flex-column" style="max-width: 800px;">
+    <div class="mb-auto"></div>
+    <div class="mt-5">
+      <div class="alert alert-<%= locals.alert_type %>" role="alert">
+        <h1><%= locals.title %></h1>
+        <p><%= locals.subtitle %></p>
+        <button type="button" class="btn btn-secondary mt-2" onclick="back()">返回上一页</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function back() {
+      window.history.back();
+    }
+  </script>
+
+</body>
+
+</html>

@@ -10,6 +10,7 @@ import { loadPlugins } from './core/plugins';
 import dotenv from 'dotenv';
 import winston from 'winston';
 import chalk from 'chalk';
+import { errorPages } from './middleware/error-pages';
 
 dotenv.config();
 
@@ -61,9 +62,13 @@ dotenv.config();
         }
     }
 
+    app
     // 渲染插件定义的页面
-    app.use(PluginRender(context.getAllPages())) 
-    
+        .use(PluginRender(context.getAllPages())) 
+        // 错误页面
+        .use(errorPages())
+
+
     // 启动服务器
     app.listen(config.port, () => {
         console.log('[express] server launched as http://localhost:' + config.port);
