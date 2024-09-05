@@ -3,6 +3,7 @@ import { defineModel } from "src/core/plugins"
 export class CommentDocument {
     uid: string
     user_uid: string
+    category_uid: string
     post_uid: string
     parent_uid?: string
     content: string
@@ -15,9 +16,10 @@ export class CommentDocument {
 export const CommentModel = defineModel<CommentDocument>('Comment',
     {
         uid: { type: String, unique: true, required: true, index: true },
+        category_uid: { type: String, required: true, index: true },
+        parent_uid: { type: String, index: true },
         user_uid: { type: String, required: true, index: true },
         post_uid: { type: String, required: true, index: true },
-        parent_uid: { type: String, index: true },
         content: { type: String, required: true, index: 'text' },
         create_at: { type: Number, required: true },
         statistics: { 

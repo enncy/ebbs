@@ -1,0 +1,127 @@
+ <!DOCTYPE html>
+ <html lang="en">
+
+ <head>
+   <%- include('/views/header') %>
+   <title><%=locals.settings.name%></title>
+   <link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+   <style>
+     #editor—wrapper {
+       border: 1px solid #ccc;
+       z-index: 100;
+       /* 按需定义 */
+     }
+
+     #toolbar-container {
+       border-bottom: 1px solid #ccc;
+     }
+
+     #editor-container {
+       height: 500px;
+     }
+   </style>
+ </head>
+
+ <body>
+   <%- include('/views/menus') %>
+   <div class="container ">
+     <div class="m-auto" style="max-width: 1200px;">
+       <h1>帖子编辑</h1>
+       <hr>
+       <div class="mt-2">
+         <div id="editor—wrapper">
+           <div id="toolbar-container">
+             <!-- 工具栏 -->
+           </div>
+           <div id="editor-container">
+             <!-- 编辑器 -->
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>
+
+   <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+   <script>
+     const {
+       createEditor,
+       createToolbar
+     } = window.wangEditor
+
+     const editorConfig = {
+       placeholder: '请输入内容...',
+       onChange(editor) {
+         const html = editor.getHtml()
+         console.log('editor content', html)
+         // 也可以同步到 <textarea>
+       }
+     }
+
+     const editor = createEditor({
+       selector: '#editor-container',
+       html: '<p><br></p>',
+       config: editorConfig,
+       mode: 'default', // or 'simple'
+     })
+
+     // 自定义校验视频 
+     function customCheckVideoFn(src, poster) { // JS 语法
+       if (!src) {
+         return
+       }
+       if (src.indexOf('http') !== 0) {
+         return '视频地址必须以 http/https 开头'
+       }
+       return true
+
+       // 返回值有三种选择：
+       // 1. 返回 true ，说明检查通过，编辑器将正常插入视频
+       // 2. 返回一个字符串，说明检查未通过，编辑器会阻止插入。会 alert 出错误信息（即返回的字符串）
+       // 3. 返回 undefined（即没有任何返回），说明检查未通过，编辑器会阻止插入。但不会提示任何信息
+     }
+
+     // 自定义转换视频
+     //  function customParseVideoSrc(src: string): string { // TS 语法
+     function customParseVideoSrc(src) { // JS 语法
+       if (src.includes('.bilibili.com')) {
+         // 转换 bilibili url 为 iframe （仅作为示例，不保证代码正确和完整）
+         const arr = location.pathname.split('/')
+         const vid = arr[arr.length - 1]
+         return `<iframe src="//player.bilibili.com/player.html?bvid=${vid}" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>`
+       }
+       return src
+     }
+
+     editorConfig.MENU_CONF['insertVideo'] = {
+       //  onInsertedVideo(videoNode: VideoElement | null) { // TS 语法
+       onInsertedVideo(videoNode) { // JS 语法
+         if (videoNode == null) return
+
+         const {
+           src
+         } = videoNode
+         console.log('inserted video', src)
+       },
+       checkVideo: customCheckVideoFn, // 也支持 async 函数
+       parseVideoSrc: customParseVideoSrc, // 也支持 async 函数
+     }
+
+     const toolbarConfig = {
+       excludeKeys: [
+         "fontSize",
+         "fontFamily",
+         "lineHeight"
+       ]
+     }
+
+     const toolbar = createToolbar({
+       editor,
+       selector: '#toolbar-container',
+       config: toolbarConfig,
+       mode: 'default', // or 'simple'
+     })
+     console.log(toolbar.getConfig().toolbarKeys);
+   </script>
+ </body>
+
+ </html>

@@ -47,11 +47,11 @@ export class UserDocument {
         })
     }
 
-    public static async findOne(or: { email?: string, account?: string }) {
-        if (!or.email && !or.account) {
+    public static async findOne(or: { email?: string, account?: string, uid?: string }) {
+        if (!or.email && !or.account && !or.uid) {
             return null
         }
-        return await UserModel.findOne(or)
+        return await UserModel.findOne({ $or: [{ email: or.email }, { account: or.account }, { uid: or.uid }] })
     }
 
     public static async findByEmailAndPassword(email: string, password: string) {

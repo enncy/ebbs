@@ -1,6 +1,10 @@
 
 
 export default {
+    '_http_.code_400': '请求参数错误',
+    '_http_.code_403': '无权访问',
+    '_http_.code_404': '页面不存在',
+    '_http_.code_500': '服务器错误',
     '_dict_.login': '登录',
     '_dict_.logout': '登录',
     '_dict_.register': '注册',
@@ -9,6 +13,9 @@ export default {
     '_dict_.account': '账号',
     '_dict_.password': '密码',
     '_dict_.email': '邮箱',
+    '_dict_.set': '设置',
+    '_dict_.update': '更新',
+    '_dict_.modify': '修改',
     '_dict_.captcha_code': '验证码',
     '_dict_.forgot_password': '忘记密码',
     '_dict_.has_account': '已有账号',
@@ -24,6 +31,14 @@ export default {
     '_dict_.personal_setting': '个人设置',
     '_dict_.notify': '通知',
     '_dict_.draft': '草稿',
+    '_dict_.input': '输入',
+    '_dict_.cations': '操作',
+    '_dict_.delete': '删除',
+    '_dict_.no_data': '暂无数据',
+    '_model_.category': '分区',
+    '_model_.category.name': '名字',
+    '_model_.category.description': '描述',
+    '_model_.category.priority': '优先级',
     '_internal_.plugin.validator.invalid_number': '"{{param_name}}" 数值无效, 必须在{{min}}-{{max}}之间',
     '_internal_.plugin.validator.invalid_length': '"{{param_name}}" 的长度必须在{{min_length}}-{{max_length}}之间',
     '_internal_.plugin.validator.invalid_match': '"{{param_name}}" 格式错误',
@@ -61,4 +76,7 @@ export default {
     'passport.reset.invalid_email': '邮箱无效',
     'passport.reset.reset_failed': '重置密码失败',
     'passport.reset.reset_success': '重置密码成功，即将跳转登录页面...',
+    'admin.sidebar.category': '论坛分区',
+    'admin.sidebar.category.create_new': '新建分区',
+    'admin.sidebar.general_setting': '通用设置',
 }

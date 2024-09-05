@@ -148,13 +148,14 @@ export const PassportPlugin = definePlugin({
     }
 
 
-    plugin.api('/code.png', async (req, res) => {
+    plugin.api('/code.png', async (req, res, next) => {
         const captchaObj = bindCaptcha(req)
         if (captchaObj) {
             res.setHeader('Content-Type', 'image/svg+xml')
             res.send(captchaObj.data)
         } else {
-            res.status(404).end()
+            res.status(404)
+            next()
         }
     })
 
@@ -163,7 +164,7 @@ export const PassportPlugin = definePlugin({
         res.redirect(plugin.api('/login'))
     })
 
-    plugin.api('/login', plugin.validator((req) => req.body, {email: commonValidator.email, password: commonValidator.password}, loginView), async (req, res) => {
+    plugin.api('/login', plugin.validator((req) => req.body, { email: commonValidator.email, password: commonValidator.password }, loginView), async (req, res) => {
         await checkCaptchaCode(req, res, loginView)
         if (res.headersSent) {
             return
@@ -173,7 +174,7 @@ export const PassportPlugin = definePlugin({
         const password = req.body.password?.trim()
         const ip = clientIp(req) || ''
 
-        const pre_e = plugin.emit(new UserPreEmailLoginEvent(email, ip))
+        const pre_e = await plugin.emit(new UserPreEmailLoginEvent(email, ip))
         if (pre_e.isCancelled()) {
             return res.send(await loginView.render(req, { error: pre_e.reason }))
         }
@@ -184,7 +185,7 @@ export const PassportPlugin = definePlugin({
         }
 
 
-        const e = plugin.emit(new UserEmailLoginSuccessEvent(email, ip))
+        const e = await plugin.emit(new UserEmailLoginSuccessEvent(email, ip))
         if (e.notCancelled()) {
             plugin.sessions.set(req, 'user', user)
             return res.send(await loginView.render(req, { success: i18n('passport.login.email_login_success'), redirect: { url: '/', timeout: 2 } }))
@@ -260,7 +261,7 @@ export const PassportPlugin = definePlugin({
         }
 
 
-        const e = plugin.emit(new UserRegisterEvent(account, email, ip))
+        const e = await plugin.emit(new UserRegisterEvent(account, email, ip))
         if (e.isCancelled()) {
             return res.send(await registerView.render(req, { error: e.reason }))
         }
@@ -279,10 +280,11 @@ export const PassportPlugin = definePlugin({
 
 
 
-    plugin.api('/confirm-email', async (req, res) => {
+    plugin.api('/confirm-email', async (req, res, next) => {
         const sign = req.query.sign?.toString().trim()
         if (!sign) {
-            return res.status(404).end()
+            res.status(404)
+            return next()
         }
         const account = req.query.account?.toString().trim()
         const email = req.query.email?.toString().trim()
@@ -295,7 +297,7 @@ export const PassportPlugin = definePlugin({
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: i18n('passport.register.confirm_email_params_invalid') }))
         }
 
-        const e = plugin.emit(new UserCreateEvent(account, email, ip))
+        const e = await plugin.emit(new UserCreateEvent(account, email, ip))
         if (e.isCancelled()) {
             return res.send(await confirmEmailFeedbackView.render(req, { alert_type: 'danger', title: i18n('passport.register.confirm_email_failed'), subtitle: e.reason }))
         }
@@ -318,12 +320,18 @@ export const PassportPlugin = definePlugin({
 
 })
 
-PassportPlugin.on(ViewRenderEvent, e => {
+PassportPlugin.on(ViewRenderEvent, async e => {
     e.data = e.data || {}
-    Object.assign(e.data, {
-        user: PassportPlugin.sessions.get(e.req, 'user'),
-        passport_settings: PassportPlugin.settings.all(),
-    })
+    const user = PassportPlugin.sessions.get(e.req, 'user')
+    if (user) {
+        // 刷新数据  
+        const res = await UserDocument.findOne({ uid: user.uid })
+        if (res) {
+            PassportPlugin.sessions.set(e.req, 'user', res)
+            e.data.user = res
+        }
+    }
+    e.data.passport_settings = PassportPlugin.settings.all()
 })
 
 /**

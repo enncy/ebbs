@@ -1,0 +1,103 @@
+<% 
+    // 排序
+    locals.categories = locals.categories.sort((a, b) => a.priority - b.priority); 
+    const create = ()=> html`
+    <form method="post" action="/admin/create-category">
+      ${i18n('_model_.category.name')} : <input class="form-control mb-2" name="name" type="text" autocomplete="off" value="新建分区" required placeholder="${i18ns('_dict_.input', '_model_.category.name').join('')}">
+      ${i18n('_model_.category.description')} : <input class="form-control mb-2" name="description" type="text" autocomplete="off" value="暂无描述~" required placeholder="${i18ns('_dict_.input', '_model_.category.description').join('')}">
+      ${i18n('_model_.category.priority')} : <input class="form-control mb-3" name="priority" type="number" autocomplete="off" value="0" required placeholder="${i18ns('_dict_.input', '_model_.category.priority').join('')}">
+      <button type="submit" class="btn btn-primary w-100" class="btn btn-primary">${i18n('_dict_.confirm')}</button>
+    </form>
+   `
+%>
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%></title>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+  <div class="container">
+    <h2><%= i18n('admin.sidebar.category') %></h2>
+    <hr>
+    <div class="d-flex flex-wrap ">
+      <div class="col-lg-2 col-12 pe-3" style="min-width: 200px;">
+        <div>
+          <%- include('./sidebar.ejs',{active: 'category'}) %>
+        </div>
+      </div>
+      <div class="col-lg-10 col-12 flex-fill">
+        <div>
+          <%- include('../components/dialog.ejs', {id: 'createModal', title: i18n('admin.sidebar.category.create_new') , body:  
+        }) %>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal"><%= i18n('admin.sidebar.category.create_new') %>+</button>
+      </div>
+      <hr>
+      <div>
+        <div>
+
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col"><%= i18n('_model_.category.name') %></th>
+              <th scope="col"><%= i18n('_model_.category.description') %></th>
+              <th scope="col"><%= i18n('_model_.category.priority') %></th>
+              <th scope="col"><%= i18n('_dict_.cations') %></th>
+            </tr>
+          </thead>
+
+          <% if (locals.categories?.length) { %>
+          <tbody>
+            <% for (let i = 0 ;i < locals.categories.length; i++) {  %>
+            <% const item = locals.categories[i]; %>
+            <tr>
+              <td><%= item.name %></td>
+              <td><%= item.description %></td>
+              <td><%= item.priority %></td>
+              <td class="text-end d-flex flex-wrap">
+                <span onclick="updateModalValue('<%=i%>')">
+                  <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateModal"><%= i18n('_dict_.modify') %></button>
+                </span>
+                <a href="/admin/remove-category?uid=<%= item.uid %>">
+                  <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
+                </a>
+              </td>
+            </tr>
+            <% } %>
+          </tbody>
+          <% } else { %>
+          <tbody>
+            <tr>
+              <td colspan="4" class="text-center text-secondary"><%= i18n('_dict_.no_data') %></td>
+            </tr>
+          </tbody>
+          <% } %>
+        </table>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script>
+    const categories = JSON.parse(decodeURI(`<%-encodeURI(JSON.stringify(locals.categories))%>`));
+
+    function updateModalValue(i) {
+      const category = categories[i];
+      var form = document.querySelector('#updateModalForm');
+      form.querySelector('input[name="uid"]').value = category.uid;
+      form.querySelector('input[name="name"]').value = category.name;
+      form.querySelector('input[name="description"]').value = category.description;
+      form.querySelector('input[name="priority"]').value = category.priority;
+    }
+  </script>
+</body>
+
+</html>

@@ -1,3 +1,40 @@
+<% 
+    // 排序
+    locals.categories = locals.categories.sort((a, b) => a.priority - b.priority); 
+%>
+
+<style>
+  .category {
+    padding: 12px;
+    display: flex;
+    border: 1px solid #eaeaea;
+  }
+
+  .category .icon {
+    flex: 0 auto;
+  }
+
+  .category .info {
+    flex: 1;
+  }
+
+  .category .statistics {
+    flex: 0 auto;
+    min-width: 128px;
+    font-size: 14px;
+  }
+
+
+  .category .icon {
+    margin-right: 12px;
+  }
+
+  .category .name {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+</style>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,8 +45,48 @@
 
 <body>
   <%- include('/views/menus') %>
-  <div class="container">
-    111
+  <div class="container ">
+    <div>
+      <div class="d-flex flex-wrap justify-content-center">
+        <div style="max-width: 800px;" class="  col-lg-8   col-12 me-lg-4 me-0">
+          <% if (locals.categories?.length) { %>
+          <div class="categorys">
+            <% for (let i = 0 ;i < locals.categories.length; i++) {  %>
+            <% const item = locals.categories[i]; %>
+            <a href="/category?id=<%= item.short_id %>" class="text-dark text-decoration-none mb-3 d-block">
+              <div class="category cursor-pointer">
+                <div class="icon"><img src="<%= item.icon || '/default_category_icon.png' %>" alt="icon" width="64" height="64"> </div>
+                <div class="info">
+                  <div class="name"><%= item.name %></div>
+                  <div class="description"><%= item.description %></div>
+                </div>
+                <div class="statistics text-secondary">
+                  <div>主题 : <%= item.statistics.posts %></div>
+                  <div>回帖 : <%= item.statistics.comments  %></div>
+                </div>
+              </div>
+            </a>
+            <% } %>
+          </div>
+          <% } else { %>
+          <div>
+            <%= i18n('_dict_.no_data') %>
+          </div>
+          <% } %>
+        </div>
+        <div style="max-width: 400px;" class="col-lg-4 col-12">
+          <div class="card" style="width: 18rem;">
+            <div class="card-body">
+              <h5 class="card-title">Card title</h5>
+              <h6 class="card-subtitle mb-2 text-body-secondary">Card subtitle</h6>
+              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+              <a href="#" class="card-link">Card link</a>
+              <a href="#" class="card-link">Another link</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </body>
 

@@ -398,7 +398,7 @@ export abstract class Plugin<
 
 
 export function definePlugin<Sessions extends Record<string, any> = any, Settings extends Record<string, any> = any, Apis extends Record<string, 'post' | 'get'> = any>
-    (config: PluginConfig<Sessions, Settings, Apis>, onload: (instance: Plugin<Sessions, Settings, Apis>) => void): Plugin<Sessions, Settings, Apis> {
+    (config: PluginConfig<Sessions, Settings, Apis>, onload: (instance: Plugin<Sessions, Settings, Apis>, app: Application) => void): Plugin<Sessions, Settings, Apis> {
 
     const plugin = class extends Plugin {
         constructor() {

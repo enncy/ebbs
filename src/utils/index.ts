@@ -14,6 +14,12 @@ export function baseUrl(path: string) {
     return (config.url + path).split('/').filter(Boolean).join('/')
 }
 
+export function hasBlankParams(...data: any[]) {
+    return data.some((item) => {
+        return item === null || item === undefined || String(item).trim() === ''
+    })
+}
+
 
 export const SignUtils = {
     sign(data: Record<string, any>) {

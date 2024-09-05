@@ -1,0 +1,30 @@
+<% 
+      
+%>
+
+<style>
+ 
+</style>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%></title>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+  <div class="container ">
+    <div class="m-auto" style="max-width: 1200px;">
+      <h1><%= post.title %></h1>
+      <hr>
+      <div class="mt-2">
+        <div class="leap"><%= post.content %></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

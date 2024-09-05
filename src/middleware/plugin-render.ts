@@ -15,6 +15,10 @@ export default (pages: Page[]): RequestHandler => {
         }
 
         const html = await page.render(req)
+        if (!html) {
+            next()
+            return
+        }
         res.send(html)
     }
 }

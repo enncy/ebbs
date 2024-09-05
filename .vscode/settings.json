@@ -4,5 +4,10 @@
   },
   "[html]": {
     "editor.defaultFormatter": "j69.ejs-beautify"
-  }
+  },
+  "lit-html.tags": [
+    "html",
+    "raw",
+    "ejs"
+  ]
 }

@@ -1,0 +1,25 @@
+ 
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%></title>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+  <div class="container ">
+    <div class="m-auto" style="max-width: 1200px;">
+      <h1><%= category.name %></h1>
+      <div class="leap"><%= category.description %></div>
+      <hr>
+      <div class="mt-2">
+        <button class="btn btn-primary">发表帖子 +</button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
