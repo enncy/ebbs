@@ -1,0 +1,5 @@
+<% if(locals.validator_error || locals.error){  %>
+<div class="alert alert-danger mt-3" role="alert">
+  <%=locals.validator_error%><%=locals.error%>
+</div>
+<% } %>

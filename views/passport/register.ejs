@@ -66,11 +66,8 @@
     </p>
 
 
-    <% if(locals.validator_error || locals.error){  %>
-    <div class="alert alert-danger mt-3" role="alert">
-      <%=locals.validator_error%><%=locals.error%>
-    </div>
-    <% } %>
+
+    <%- include('/views/components/error.alert.ejs') %>
 
     <% if(locals.success){  %>
     <div class="alert alert-success mt-3" role="alert">
