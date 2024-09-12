@@ -1,9 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 
+
 <head>
   <%- include('/views/header') %>
   <title><%=locals.settings.name%> - <%= i18n('_dict_.login') %></title>
+
+  <style>
+    .container form {
+      background-color: white;
+      border-radius: 4px;
+      padding: 24px;
+    }
+  </style>
 </head>
 
 <body>
@@ -11,8 +20,8 @@
 
   <div class="container" style="max-width: 600px;">
 
-    <form class="mt-5" method="POST">
 
+    <form class="mt-5 " method="POST">
 
       <h3><%=locals.settings.name%> - <%= i18n('_dict_.login') %></h3>
       <hr>
@@ -45,12 +54,13 @@
       <div class="w-100 mt-3">
         <button type="submit" class="btn btn-primary w-100"><%= i18n('_dict_.login') %></button>
       </div>
+
+      <p class="mt-3">
+        <%= i18n('_dict_.no_account') %>？
+        <a href="/passport/register"><%= i18n('_dict_.register_now') %> </a>
+      </p>
     </form>
 
-    <p class="mt-3">
-      <%= i18n('_dict_.no_account') %>？
-      <a href="/passport/register"><%= i18n('_dict_.register_now') %> </a>
-    </p>
 
 
     <%- include('/views/components/error.alert.ejs') %>
@@ -70,7 +80,7 @@
       img.src = '/passport/code.png?t=' + Date.now()
       console.log(img.src);
     }
-  </script> 
+  </script>
 
   <%- include('./redirect.ejs') %>
 </body>
