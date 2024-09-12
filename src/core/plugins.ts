@@ -1,4 +1,4 @@
-import { Application, Request, RequestHandler, Response } from "express";
+import { Application, Request, RequestHandler, Response, ErrorRequestHandler } from 'express';
 import path, { resolve } from "path";
 import mongoose, { Model, Schema, SchemaOptions, SchemaTypeOptions } from "mongoose";
 import { DefaultsConstructorValue, Event, EventConstructor, Page, PluginConfig, PluginView } from './interfaces';
@@ -10,9 +10,8 @@ import { ViewRenderEvent } from "../events/page";
 import { i18n } from "../defaults-plugins/i18n";
 import defaultsDeep from 'lodash/defaultsDeep';
 import winston, { Logger } from 'winston';
-
-
-
+import { ServerResponse } from "http";
+ 
 export type PluginExport<Sessions extends Record<string, any> = any, Settings extends Record<string, any> = any, Apis extends Record<string, any> = any> = {
     id: string;
     name: string;
@@ -166,7 +165,7 @@ export abstract class Plugin<
       */
     get logger() {
         this._logger_instance = this._logger_instance || winston.createLogger({
-            format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston.format.json()),
+            format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston.format.simple()),
             transports: [
                 new winston.transports.File({ filename: resolve('logs', this.config.id, 'error.log'), level: 'error', lazy: true }),
                 new winston.transports.File({ filename: resolve('logs', this.config.id, 'console.log'), lazy: true }),
@@ -232,13 +231,16 @@ export abstract class Plugin<
         const _this = this
         return {
             async render(req, extra_data) {
+                if (extra_data instanceof ServerResponse) {
+                    extra_data = {}
+                }
                 fs.mkdirSync(resolve('views', _this.id), { recursive: true })
                 const view_path = resolve('views', _this.id, path.toString())
                 const data = Object.assign(data_provider ? await data_provider(req) ?? {} : {}, extra_data)
                 const e = new ViewRenderEvent(req, view_path, data)
                 await _this.emit(e)
                 return EJS.renderFile(view_path, e.data, {
-                    root: process.cwd(),
+                    root: process.cwd()
                 })
             },
         }
@@ -265,6 +267,20 @@ export abstract class Plugin<
 
         const func = (this.app)?.[this.config.apis[path]]
         if (func) {
+            for (let index = 0; index < handlers.length; index++) {
+                const handler = handlers[index];
+                handlers[index] = async (req, res, next) => {
+
+
+                    try {
+                        await handler(req, res, next)
+                    } catch (e) {
+                        console.error('error', e)
+                        next(e)
+                    }
+
+                }
+            }
             func.call(this.app, this.baseUrl(path as string), ...handlers)
         }
     }
@@ -347,6 +363,15 @@ export abstract class Plugin<
             }
             next()
         }
+    }
+
+    async sendError(req: Request, res: Response, status_code: number, error?: string) {
+        const data = { error }
+        const e = new ViewRenderEvent(req, req.path, data)
+        await this.emit(e)
+        EJS.renderFile(resolve('views', status_code + '.ejs'), e.data, { root: process.cwd() }).then((result) => {
+            res.status(status_code).send(result)
+        })
     }
 
     /**
