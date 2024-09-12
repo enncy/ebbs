@@ -6,12 +6,21 @@ export class CommentDocument {
     category_uid: string
     post_uid: string
     parent_uid?: string
-    content: string
+    html: string
+    text: string
     create_at: number
-    statistics: {
-        likes: number
-        comments: number
+
+    public static count(post_id: string) {
+        return CommentModel.countDocuments({ post_uid: post_id })
     }
+
+    public static list(post_id: string, page: number, limit: number) {
+        return CommentModel.find({ post_uid: post_id })
+            .sort({ create_at: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+    }
+
 }
 export const CommentModel = defineModel<CommentDocument>('Comment',
     {
@@ -20,12 +29,9 @@ export const CommentModel = defineModel<CommentDocument>('Comment',
         parent_uid: { type: String, index: true },
         user_uid: { type: String, required: true, index: true },
         post_uid: { type: String, required: true, index: true },
-        content: { type: String, required: true, index: 'text' },
+        html: { type: String, required: true, index: 'text' },
+        text: { type: String, required: true, index: 'text' },
         create_at: { type: Number, required: true },
-        statistics: { 
-            likes: { type: Number, default: 0 },
-            comments: { type: Number, default: 0 }
-        }
     },
     {
         collection: 'comments'

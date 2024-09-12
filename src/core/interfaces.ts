@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 import { Model } from "mongoose";
 
 export interface PluginConfig<Sessions extends Record<string, any> = any, Settings extends Record<string, any> = any, Apis extends Record<string, any> = any> {
@@ -15,7 +15,7 @@ export interface PluginConfig<Sessions extends Record<string, any> = any, Settin
 export interface Page<R = {}> {
     path: string;
     custom_path?: boolean;
-    render: (req: Request & R) => string | undefined | Promise<string | undefined> 
+    render: (req: Request & R, res: Response) => string |  undefined | Promise<string | undefined> 
 }
 
 export interface PluginView {

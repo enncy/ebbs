@@ -1,6 +1,6 @@
 
-import forge from 'node-forge';
-import config from '../../ebbs.config.json';
+import { global_config } from 'ebbs.config';
+import forge from 'node-forge'; 
 
 export function html(strings: TemplateStringsArray, ...values: any[]) {
     return strings.reduce((acc, str, i) => {
@@ -11,7 +11,7 @@ export function html(strings: TemplateStringsArray, ...values: any[]) {
 
 
 export function baseUrl(path: string) {
-    return (config.url + path).split('/').filter(Boolean).join('/')
+    return (global_config.url + path).split('/').filter(Boolean).join('/')
 }
 
 export function hasBlankParams(...data: any[]) {

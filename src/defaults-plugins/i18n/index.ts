@@ -1,14 +1,14 @@
-import path from "path";
-import settings from "../../../ejs.settings.json";
+import path from "path"; 
 import default_lang from "./default";
 import fs from 'fs';
+import { global_config } from "ebbs.config";
 
 const i18n_caches = new Map<string, Record<string, string>>()
 
 type LangKeys = typeof default_lang
 
 export function i18n(key: keyof LangKeys, placeholders: Record<string, any> = {}) {
-    const lang = settings.language
+    const lang = global_config.language
     const lang_path = path.resolve('languages', lang + '.json')
     if (!fs.existsSync(lang_path)) {
         throw new Error('Language file not found :' + lang_path)
@@ -22,5 +22,5 @@ export function i18n(key: keyof LangKeys, placeholders: Record<string, any> = {}
 }
 
 export function i18ns(...keys: (keyof LangKeys)[]) {
-    return keys.map((key) => i18n(key))
+    return keys.map((key) => i18n(key)).join('')
 }

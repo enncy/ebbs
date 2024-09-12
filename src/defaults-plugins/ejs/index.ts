@@ -4,6 +4,7 @@ import { ViewRenderEvent } from "src/events/page";
 import { i18n, i18ns } from "../i18n";
 import { Request } from "express";
 import { html } from "src/utils";
+import dayjs from "dayjs"; 
 
 definePlugin({
     id: 'ejs-locals-export',
@@ -16,6 +17,7 @@ definePlugin({
 })
 
 export function bindEJSBaseVariables(req: Request, data: any) {
+    Reflect.set(data, 'dayjs', (time: number) => dayjs(time).format('YYYY-MM-DD HH:mm:ss'))
     Reflect.set(data, 'html', html)
     Reflect.set(data, 'i18n', i18n)
     Reflect.set(data, 'i18ns', i18ns)

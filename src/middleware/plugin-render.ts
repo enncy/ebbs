@@ -14,7 +14,10 @@ export default (pages: Page[]): RequestHandler => {
             return
         }
 
-        const html = await page.render(req)
+        const html = await page.render(req, res)
+        if(res.headersSent) {
+            return
+        }
         if (!html) {
             next()
             return

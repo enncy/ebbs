@@ -1,4 +1,11 @@
-<header class="p-3 mb-3 border-bottom">
+<style>
+  header{
+    position: sticky;
+    top: 0;
+  }
+</style>
+
+<header class="p-2 mb-5 border-bottom bg-white">
   <div class="container">
     <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
       <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none">
@@ -18,7 +25,7 @@
         <% if(locals.user){ %>
 
         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-          <span><%= locals.user.account || 'undefined' %></span> <img src="<%= locals.user.avatar || '/default_avatar.png' %>" alt="<%= locals.user.account %>" width="32" height="32" class="rounded-circle">
+          <span><%= locals.user.account || 'undefined' %></span> <img src="<%= locals.user.avatar || '/assets/default_avatar.png' %>" alt="<%= locals.user.account %>" width="32" height="32" class="rounded-circle">
         </a>
         <ul class="dropdown-menu text-small">
           <li><a class="dropdown-item" href="/user/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
@@ -33,7 +40,7 @@
         <% }else{ %>
         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
           <span>
-            <%= i18n('_dict_.unregister') %>
+            <%= i18n('_dict_.no_login') %>
           </span>
         </a>
         <ul class="dropdown-menu text-small">
@@ -45,3 +52,5 @@
     </div>
   </div>
 </header>
+
+<%- include('/views/bg.ejs') %>

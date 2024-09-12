@@ -2,7 +2,7 @@ import { CancellableEvent, PluginView } from "src/core/interfaces"
 import { definePlugin, Validator } from "../../core/plugins"
 import { UserDocument, UserModel } from "src/models/user"
 import captcha from 'svg-captcha';
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import { sendEmail } from "../email";
 import { i18n } from "../i18n";
 import { baseUrl, SignUtils } from "src/utils";
@@ -87,7 +87,11 @@ export const PassportPlugin = definePlugin({
     })
     plugin.definePage({
         path: '/confirm-email',
-        render: (req) => {
+        render: (req, res) => {
+            if (!req.query.sign) {
+                res.status(400)
+                return
+            }
             return confirmEmailFeedbackView.render(req)
         }
     })
@@ -328,7 +332,7 @@ PassportPlugin.on(ViewRenderEvent, async e => {
         const res = await UserDocument.findOne({ uid: user.uid })
         if (res) {
             PassportPlugin.sessions.set(e.req, 'user', res)
-            e.data.user = res
+            e.data.user = res.toJSON()
         }
     }
     e.data.passport_settings = PassportPlugin.settings.all()
@@ -360,4 +364,21 @@ function createResetPasswordUrl(email: string) {
  */
 export function clientIp(req: Request) {
     return req.headers?.['x-forwarded-for']?.toString() || req.socket.remoteAddress;
+}
+
+
+export function permission(...permissions: string[]): RequestHandler {
+    return (req, res, next) => {
+        const user = PassportPlugin.sessions.get(req, 'user')
+        if (!user) {
+            return res.redirect(PassportPlugin.api('/login'))
+        }
+        if (permissions.length === 0) {
+            return next()
+        }
+        if (permissions.some(p => user.permissions.includes(p))) {
+            return next()
+        }
+        res.status(403)
+    }
 }

@@ -1,6 +1,11 @@
 import { defineModel } from "src/core/plugins"
 import { uuid } from "./utils"
 import { SignUtils } from "src/utils"
+import { UploadedFile } from "express-fileupload"
+import { global_config } from "ebbs.config"
+import { join, resolve } from "path"
+import fs from 'fs';
+import dayjs from "dayjs"
 
 export class UserDocument {
     uid: string
@@ -94,6 +99,7 @@ export class UserDocument {
             password_salt: salt
         })
     }
+
 }
 export const UserModel = defineModel<UserDocument>('User',
     {

@@ -9,5 +9,9 @@
     "html",
     "raw",
     "ejs"
+  ],
+  "editor.wordBasedSuggestions": "off",
+  "cSpell.words": [
+    "fileupload"
   ]
 }

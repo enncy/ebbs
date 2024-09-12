@@ -14,7 +14,7 @@
     <div class="mt-5">
       <div class="alert alert-<%= locals.alert_type %>" role="alert">
         <h1><%= locals.title %></h1>
-        <p><%= locals.subtitle %></p>
+        <p><%= locals.error || locals.subtitle  %></p>
         <button type="button" class="btn btn-secondary mt-2" onclick="back()">返回上一页</button>
       </div>
     </div>
