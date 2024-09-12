@@ -1,5 +1,7 @@
 import { defineModel } from "src/core/plugins"
 import { randomShortId, uuid } from "./utils"
+import { ContentUtils } from "src/utils/content"
+import similarity from 'string-similarity';
 
 export class PostDocument {
     uid: string
@@ -7,13 +9,15 @@ export class PostDocument {
     user_uid: string
     category_uid: string
     title: string
-    content: string
+    text: string
+    html: string
     tags: string[]
+    title_keywords: string[]
+    text_keywords: string[]
     pin: boolean
     draft: boolean
     locked: boolean
     deleted: boolean
-    enable_comment: boolean
     permissions: string[]
     post_at: number
     last_edit_at: number
@@ -24,7 +28,56 @@ export class PostDocument {
         views: number
     }
 
-    public static async create({ user_uid, category_uid, title, content, tags }: { user_uid: string, category_uid: string, title: string, content: string, tags: string[] }) {
+    public static async findByShortId(short_id: string) {
+        const post = await PostModel.findOne({ short_id })
+        if (!post) {
+            return null
+        }
+        if (post.deleted || post.draft) {
+            return null
+        }
+        return post
+    }
+
+    public static async list(query: { category_uid: string, page: number, size: number }) {
+        const common_filter = { deleted: false, draft: false, locked: false }
+        const posts = await PostModel.find({ category_uid: query.category_uid, ...common_filter })
+            .sort({ post_at: -1 })
+            .skip(query.page * query.size)
+            .limit(query.size)
+        return posts
+    }
+
+    public static async search(value: string) {
+        const words = ContentUtils.cutForSearch(value)
+        const common_filter = { deleted: false, draft: false, locked: false }
+        const posts = await PostModel.find({
+            $or: [
+                { title_keywords: { $in: words }, ...common_filter },
+                { text_keywords: { $in: words }, ...common_filter },
+            ]
+        })
+
+        // 计算相似度
+        for (const post of posts) {
+            const rating = similarity.compareTwoStrings(post.title, value)
+            console.log(value, post.title, rating);
+            Reflect.set(post, 'rating', rating)
+        }
+
+        return posts.sort((a, b) => {
+            const val = (post: PostDocument) => {
+                return (post.post_at ? 1 : 0)
+                    + (post.last_edit_at ? 1 : 0)
+                    + (post.last_comment_at ? 1 : 0)
+                    + (post.pin ? 1 : 0)
+                    + (Reflect.get(post, 'rating') || 1) * 100
+            }
+            return val(b) - val(a)
+        })
+    }
+
+    public static async create({ user_uid, category_uid, title, html, text, tags, draft }: { user_uid: string, category_uid: string, title: string, text: string, html: string, tags: string[], draft: boolean }) {
         const short_id = await randomShortId(async (id) => !await PostModel.findOne({ short_id: id }))
         return await PostModel.create<PostDocument>({
             uid: uuid(),
@@ -32,13 +85,15 @@ export class PostDocument {
             user_uid,
             category_uid,
             title,
-            content,
+            text,
+            html,
             tags,
+            title_keywords: ContentUtils.cutForSearch(title, 10),
+            text_keywords: ContentUtils.cutForSearch(text),
+            draft: draft,
             pin: false,
-            draft: false,
             locked: false,
             deleted: false,
-            enable_comment: true,
             post_at: Date.now(),
             last_edit_at: 0,
             last_comment_at: 0,
@@ -84,7 +139,7 @@ export class PostDocument {
     }
 
     public static async update(uid: string, update: {
-        title: string, content: string, tags: string[],
+        title: string, html: string, text: string, tags: string[],
         permissions?: string[],
         pin?: boolean,
         draft?: boolean,
@@ -96,9 +151,18 @@ export class PostDocument {
         if (!post) {
             return
         }
-        post.title = update.title
-        post.content = update.content
         post.tags = update.tags
+        if (post.title !== update.title) {
+            post.title = update.title
+            post.title_keywords = ContentUtils.cutForSearch(update.title, 10)
+        }
+        if (post.text !== update.text) {
+            post.text = update.text
+            post.text_keywords = ContentUtils.cutForSearch(update.text)
+        }
+        if (post.html !== update.html) {
+            post.html = update.html
+        }
         if (update.permissions !== undefined) {
             post.permissions = update.permissions
         }
@@ -114,9 +178,6 @@ export class PostDocument {
         if (update.deleted !== undefined) {
             post.deleted = update.deleted
         }
-        if (update.enable_comment !== undefined) {
-            post.enable_comment = update.enable_comment
-        }
         post.last_edit_at = Date.now()
         return post.save()
     }
@@ -128,13 +189,15 @@ export const PostModel = defineModel<PostDocument>('Post',
         user_uid: { type: String, required: true, index: true },
         category_uid: { type: String, required: true, index: true },
         title: { type: String, required: true, index: 'text' },
-        content: { type: String, required: true, index: 'text' },
+        html: { type: String, required: true, },
+        text: { type: String, required: true, index: 'text' },
         tags: { type: [String], default: [] },
+        title_keywords: { type: [String], default: [] },
+        text_keywords: { type: [String], default: [] },
         pin: { type: Boolean, default: false },
         draft: { type: Boolean, default: false },
         locked: { type: Boolean, default: false },
         deleted: { type: Boolean, default: false },
-        enable_comment: { type: Boolean, default: true },
         post_at: { type: Number, required: true },
         last_edit_at: { type: Number, default: 0 },
         last_comment_at: { type: Number, default: 0 },
