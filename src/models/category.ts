@@ -3,9 +3,11 @@ import { randomShortId, uuid } from "./utils"
 
 export class CategoryDocument {
     uid: string
-    short_id: string
+    group_uid?: string
+    short_id: String
     name: string
     description: string
+    icon?: string
     /**
      * 优先级，数字越小越靠前
      */
@@ -26,10 +28,11 @@ export class CategoryDocument {
         views: number
     }
 
-    public static async create(name: string, description: string, priority: number = 0) {
+    public static async create(name: string, description: string, priority: number = 0, group_uid?: string) {
         const short_id = await randomShortId(async (id) => !await CategoryModel.findOne({ short_id: id }))
         return await CategoryModel.create<CategoryDocument>({
             uid: uuid(),
+            group_uid,
             short_id,
             name,
             description,
@@ -66,7 +69,9 @@ export class CategoryDocument {
 export const CategoryModel = defineModel<CategoryDocument>('Category',
     {
         uid: { type: String, unique: true, required: true, index: true },
+        group_uid: { type: String, index: true },
         short_id: { type: String, unique: true, required: true, index: true },
+        icon: { type: String, default: '' },
         name: { type: String, unique: true, required: true, index: true },
         description: { type: String, required: true, index: 'text' },
         priority: { type: Number, default: 0 },

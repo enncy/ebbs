@@ -1,6 +1,5 @@
 <% 
-    // 排序
-    locals.categories = locals.categories.sort((a, b) => a.priority - b.priority); 
+    // 排序 
 %>
 
 <style>
@@ -8,7 +7,15 @@
     padding: 12px;
     display: flex;
     border: 1px solid #eaeaea;
+    border-radius: 4px;
   }
+
+  .category-container {
+    background-color: white;
+    padding: 24px 0px;
+    border-radius: 4px;
+  }
+
 
   .category .icon {
     flex: 0 auto;
@@ -45,27 +52,37 @@
 
 <body>
   <%- include('/views/menus') %>
-  <div class="container ">
+  <div class="container category-container">
     <div>
       <div class="d-flex flex-wrap justify-content-center">
-        <div style="max-width: 800px;" class="  col-lg-8   col-12 me-lg-4 me-0">
-          <% if (locals.categories?.length) { %>
+        <div style="max-width: 800px;" class="col-lg-8 col-12 me-lg-4 me-0">
+          <% if (locals.category_groups?.length) { %>
           <div class="categorys">
-            <% for (let i = 0 ;i < locals.categories.length; i++) {  %>
-            <% const item = locals.categories[i]; %>
-            <a href="/category?id=<%= item.short_id %>" class="text-dark text-decoration-none mb-3 d-block">
-              <div class="category cursor-pointer">
-                <div class="icon"><img src="<%= item.icon || '/default_category_icon.png' %>" alt="icon" width="64" height="64"> </div>
-                <div class="info">
-                  <div class="name"><%= item.name %></div>
-                  <div class="description"><%= item.description %></div>
-                </div>
-                <div class="statistics text-secondary">
-                  <div>主题 : <%= item.statistics.posts %></div>
-                  <div>回帖 : <%= item.statistics.comments  %></div>
-                </div>
+            <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
+            <% const category_group = locals.category_groups[i]; %>
+
+            <div class="card">
+              <h5 class="card-header"><%= category_group.name %></h5>
+              <div class="card-body">
+                <% for (let j = 0 ;j < category_group.children.length; j++) {  %>
+                <% const item = category_group.children[i]; %>
+                <a href="/category?id=<%= item.short_id %>" class="text-dark text-decoration-none mb-3 d-block">
+                  <div class="category cursor-pointer">
+                    <div class="icon"><img src="<%= item.icon || '/default_category_icon.png' %>" alt="icon" width="64" height="64"> </div>
+                    <div class="info">
+                      <div class="name"><%= item.name %></div>
+                      <div class="description"><%= item.description %></div>
+                    </div>
+                    <div class="statistics text-secondary">
+                      <div>主题 : <%= item.statistics.posts %></div>
+                      <div>回帖 : <%= item.statistics.comments  %></div>
+                    </div>
+                  </div>
+                </a>
+                <% } %>
               </div>
-            </a>
+            </div>
+
             <% } %>
           </div>
           <% } else { %>
@@ -75,13 +92,20 @@
           <% } %>
         </div>
         <div style="max-width: 400px;" class="col-lg-4 col-12">
-          <div class="card" style="width: 18rem;">
+
+          <div class="card mb-3">
+            <h5 class="card-header">新帖子</h5>
             <div class="card-body">
-              <h5 class="card-title">Card title</h5>
-              <h6 class="card-subtitle mb-2 text-body-secondary">Card subtitle</h6>
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              <a href="#" class="card-link">Card link</a>
-              <a href="#" class="card-link">Another link</a>
+              <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+              <a href="#" class="btn btn-primary">Go somewhere</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <h5 class="card-header">新帖子</h5>
+            <div class="card-body">
+              <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+              <a href="#" class="btn btn-primary">Go somewhere</a>
             </div>
           </div>
         </div>
