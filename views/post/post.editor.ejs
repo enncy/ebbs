@@ -7,18 +7,10 @@
   <script src="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2018/jodit.fat.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2015/jodit.min.css">
   <style>
-    #editor—wrapper {
-      border: 1px solid #ccc;
-      z-index: 100;
-      /* 按需定义 */
-    }
-
-    #toolbar-container {
-      border-bottom: 1px solid #ccc;
-    }
-
-    #editor-container {
-      height: 500px;
+    .container form {
+      background-color: white;
+      border-radius: 4px;
+      padding: 24px;
     }
 
     .extra-functions {
@@ -50,11 +42,12 @@
 
       <%- include('/views/components/error.alert.ejs') %>
 
-      <h1>
-        <%= i18ns('_model_.post','_dict_.edit') %>
-      </h1>
-      <hr />
       <form method="post" action="/post/editor?category_uid=<%= locals.query.category_uid %>">
+
+        <h1>
+          <%= i18ns('_model_.post','_dict_.edit') %>
+        </h1>
+        <hr />
 
         <input name="deleted_images" type="hidden">
         <input name="category_uid" type="hidden" value="<%= locals.query.category_uid %>">
@@ -119,12 +112,6 @@
       const form_data = new FormData(form_el)
       const content = form_data.get('text').toString()
 
-      if (content.trim() === '' || content.length < content_min_length || content.length > content_max_length) {
-        if (content.length < content_max_length) {
-          return alert(`<%= i18n('post.form.content_length_too_short', {min: locals.content_min_length || 10  }) %>`)
-        }
-        return alert(`<%= i18n('post.form.content_length_limit', {min: locals.content_min_length || 10, max: locals.content_max_length || 10000}) %>`)
-      }
       // 判断标签
       const tags = form_data.get('tags').toString().split(' ').filter(tag => tag.trim())
       if (tags.length > tags_max_length) {
@@ -137,6 +124,38 @@
       form_el.submit()
     }
 
+    const buttons = [
+      'bold',
+      'strikethrough',
+      'underline',
+      'hr',
+      'italic', '|',
+      'font',
+      'fontsize',
+      'brush', '|',
+      'ul',
+      'ol',
+      'paragraph', '|',
+      'outdent', 'indent',
+      'align', '|',
+      'custom_emoji',
+      'image',
+      'custom_video',
+      'link',
+      'table', '|',
+      'undo', 'redo'
+    ]
+
+    const buttons_simple = [
+      'bold',
+      'custom_emoji',
+      'image',
+      'custom_video',
+      'link',
+      'table',
+      'dots'
+    ]
+
     const jodit = Jodit.make('#jodit-editor', {
       language: 'zh_cn',
       height: 600,
@@ -145,36 +164,10 @@
       link: {
         processVideoLink: false
       },
-      buttons: [
-        'bold',
-        'strikethrough',
-        'underline',
-        'hr',
-        'italic', '|',
-        'font',
-        'fontsize',
-        'brush', '|',
-        'ul',
-        'ol',
-        'paragraph', '|',
-        'outdent', 'indent',
-        'align', '|',
-        'custom_emoji',
-        'image',
-        'custom_video',
-        'link',
-        'table', '|',
-        'undo', 'redo'
-      ],
-      buttonsXS: [
-        'bold',
-        'custom_emoji',
-        'image',
-        'custom_video',
-        'link',
-        'table',
-        'dots'
-      ],
+      buttons: buttons,
+      buttonsMD: buttons,
+      buttonsSM: buttons_simple,
+      buttonsXS: buttons_simple,
       controls: {
         custom_video: {
           name: 'custom_video',

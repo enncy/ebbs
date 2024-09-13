@@ -54,6 +54,14 @@
        font-size: 16px;
        font-weight: bold;
      }
+
+     .title a:hover {
+       text-decoration: underline !important;
+     }
+
+     .post:hover {
+       background-color: #f9f9f9;
+     }
    </style>
 
  </head>
@@ -89,7 +97,7 @@
            <div class="mb-1">
              <div class="post">
                <div class="info">
-                 <div class="title"><a class="text-dark " href="/p/<%= item.short_id %>"><%= item.title %></a></div>
+                 <div class="title"><a class="text-dark text-decoration-none d-inline-block w-100" href="/p/<%= item.short_id %>"><%= item.title %></a></div>
                  <div class="d-inline">
                    <small class="description">
                      <a href="/u/<%= item.user.account  %>"><%= item.user.account %></a>

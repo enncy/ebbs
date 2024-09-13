@@ -38,6 +38,7 @@
     "_dict_.insert": "插入",
     "_dict_.add": "添加",
     "_dict_.post": "发布",
+    "_dict_.back_to_previous_page": "返回上一页",
     "_model_.category_group": "分区组",
     "_model_.category_group.name": "组名",
     "_model_.category_group.priority": "组优先级",

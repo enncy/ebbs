@@ -3,19 +3,24 @@
 %>
 
 <style>
-  img, video {
-    max-width: 100%; 
-  }
-
   .post {
-    max-width: 800px;
+    min-width: 400px;
+    display: block;
   }
 
-  .post-wrapper{
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 24px;
-    border-radius: 12px;
-    background-color: white; 
+  .container {
+    max-width: 1000px !important;
+  }
+
+  .post-wrapper {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    border-radius: 4px;
+  }
+
+  .post-menus {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
     border-radius: 4px;
   }
 
@@ -23,16 +28,16 @@
     display: flex
   }
 
-  .breadcrumb a {
+  .post-breadcrumb a {
     color: #1b6091 !important;
   }
 
-  .breadcrumb-split {
+  .post-breadcrumb-split {
     margin: 0px 4px;
   }
 
   .post .title {
-    font-size: 18px; 
+    font-size: 22px;
   }
 
   .vertical-divider {
@@ -41,8 +46,58 @@
     margin: 0px 12px;
   }
 
+  .post-users-wrapper {
+    border-right: 1px solid #e0e0e0; 
+    white-space: nowrap;
+    background-color: #f0f0f0;
+  }
+
+  .user-avatar {
+    border: 1px solid #cecece;
+    border-radius: 4px;
+    width: 96px;
+  }
+
+  .user-account {
+    width: 160px;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .post-content img,
+  .post-content video,
+  .post-content iframe { 
+    max-width: 100% !important; 
+  }
   .post-content {
-    padding: 4px;
+    max-width: 760px !important;
+  }
+
+
+  @media screen and (max-width: 742px) {
+    .post-users-wrapper {
+      width: 100%;
+      padding: 0px;
+      margin: 0px;
+      display: block;
+    }
+
+    .post-wrapper {
+      flex-wrap: wrap;
+    }
+
+    .post-content-wrapper {
+      width: 100%;
+      padding: 4px;
+    }
+
+    .user-avatar { 
+      width: 48px;
+    }
+
+    .user-account {
+      font-weight: bold;
+    }
   }
 </style>
 
@@ -56,35 +111,74 @@
 
 <body>
   <%- include('/views/menus') %>
-  <div class="container">
-    <div class="m-auto post"> 
-      <div class="post-wrapper">
-        <div class="breadcrumbs">
-          <span class="breadcrumb"><a href="/">首页</a></span>
-          <span class="breadcrumb-split">></span>
-          <span class="breadcrumb"><a href="/category?id=<%= category.short_id %>"><%= category.name %></a></span>
-          <span class="breadcrumb-split">></span>
-          <span class="breadcrumb"><a href="/p/<%= post.short_id %>"><%= post.title.length > 10 ?  post.title.slice(0,10) + '...' :  post.title %></a></span>
+  <div class=" container p-0">
+    <div class="m-auto post">
+      <div class=" ">
+
+        <!-- 导航栏 -->
+        <div class="post-menus d-flex p-2 ps-lg-4 pe-lg-4 align-items-center ">
+          <div class="flex-fill">
+            <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+              <ol class="breadcrumb m-0">
+                <li class="breadcrumb-item"><a href="/">首页</a></li>
+                <li class="breadcrumb-item"><a href="/category?id=<%= category.short_id %>"><%= category.name %></a></li>
+                <li class="breadcrumb-item active" aria-current="page"><a href="/p/<%= post.short_id %>"><%= post.title.length > 10 ?  post.title.slice(0,10) + '...' :  post.title %></a></li>
+              </ol>
+            </nav>
+          </div>
+
+          <div class="flex-auto">
+            <button type="button" onclick="back()" class="btn btn-sm btn-outline-primary">
+              <%= i18n('_dict_.back_to_previous_page') %>
+            </button>
+
+          </div>
         </div>
 
-        <div class="title"><b><%= post.title %></b></div>
-        <div class="d-flex flex-wrap mt-3">
-          <div class="flex-fill">
-            <small>发布于：<%= dayjs(post.post_at)  %></small>
+
+        <div class="d-flex  post-wrapper p-lg-4 p-0 mt-3">
+          <div class="post-users-wrapper pt-lg-3 m-1 me-lg-3 rounded flex-auto">
+            <div class="text-lg-center d-flex d-lg-block align-items-center p-2 p-lg-0 gap-3">
+              <div>
+                <img class="user-avatar" src="<%= post.user.avatar || '/assets/default_avatar.png' %>" alt="<%= post.user.account %>">
+              </div>
+              <div class="flex-fill user-account"><%= post.user.account %></div>
+              <div class="user-profile pe-3 pe-lg-0">
+                <div><small>昵称：<%= post.user.nickname || '无' %></small></div>
+                <div><small>帖子：1</small></div>
+                <div><small>粉丝：1</small></div>
+              </div>
+            </div>
           </div>
-          <div class="flex-auto">
-            <small>查看：<%= post.statistics.comments %></small>
-            <span class="vertical-divider"></span>
-            <small>回帖：<%= post.statistics.comments %></small>
+
+
+          <div class="post-content-wrapper flex-fill">
+            <div class="title"><b><%= post.title %></b></div>
+            <div class="d-flex flex-wrap mt-2">
+              <div class="flex-fill">
+                <small>发布于：<%= dayjs(post.post_at)  %></small>
+              </div>
+              <div class="flex-auto">
+                <small>查看：<%= post.statistics.comments %></small>
+                <span class="vertical-divider"></span>
+                <small>回帖：<%= post.statistics.comments %></small>
+              </div>
+            </div>
+            <hr>
+            <div class="mt-2 post-content">
+              <div class="leap"><%- post.html %></div>
+            </div>
           </div>
-        </div>
-        <hr>
-        <div class="mt-2 post-content">
-          <div class="leap"><%- post.html %></div>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    function back() {
+      window.history.back();
+    }
+  </script>
 </body>
 
 </html>

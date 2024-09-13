@@ -82,12 +82,12 @@ export const global_config = {
             {
                 domain: 'bilibili.com',
                 name: '哔哩哔哩',
-                iframe_template: `<iframe width="700" height="400" src="https://player.bilibili.com/player.html?bvid={{path[1]}}&as_wide=1" frameborder="0" allowfullscreen=""></iframe>`
+                iframe_template: `<iframe width="450" height="250" src="https://player.bilibili.com/player.html?bvid={{path[1]}}&as_wide=1" frameborder="0" allowfullscreen=""></iframe>`
             },
             {
                 domain: 'youtube.com',
                 name: 'YouTube',
-                iframe_template: `<iframe width="700" height="400" src="https://www.youtube.com/embed/{{params.v}}" frameborder="0"></iframe>`
+                iframe_template: `<iframe width="450" height="250" src="https://www.youtube.com/embed/{{params.v}}" frameborder="0"></iframe>`
             }
         ]
     }

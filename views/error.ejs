@@ -15,7 +15,7 @@
       <div class="alert alert-<%= locals.alert_type %>" role="alert">
         <h1><%= locals.title %></h1>
         <p><%= locals.error || locals.subtitle  %></p>
-        <button type="button" class="btn btn-secondary mt-2" onclick="back()">返回上一页</button>
+        <button type="button" class="btn btn-secondary mt-2" onclick="back()"><%= i18n('_dict_.back_to_previous_page') %></button>
       </div>
     </div>
   </div>
