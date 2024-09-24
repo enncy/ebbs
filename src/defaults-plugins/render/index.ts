@@ -14,6 +14,8 @@ import { ContentUtils } from "src/utils/content";
 import { CommentDocument } from "src/models/comment";
 import { UserDocument } from "src/models/user";
 import { CategoryGroupDocument } from "src/models/category_group";
+import { UserViewDocument } from "src/models/state/user.view";
+import { UserLikeCommentDocument } from "src/models/state/user.like.comment";
 
 
 definePlugin({
@@ -75,22 +77,45 @@ definePlugin({
     name: 'post-plugin',
     apis: {
         '/editor': 'post',
-        '/upload': 'post'
+        '/upload': 'post',
+        '/comment': 'post',
+        '/like-comment': 'get',
+        '/remove-comment': 'get',
+        '/comment-redirect': 'get', // TODO
     },
     sessions: {
         latest_upload_time: Number
     },
 }, (plugin, app) => {
-    const postEditorView = plugin.definedView('post.editor.ejs', () => {
+    const postEditorView = plugin.definedView('post.editor.ejs', async (req) => {
+        // post_short_id
+        const pid = req.query.pid?.toString().trim()
+        const post = pid ? await PostDocument.findByShortId(pid) : null
+        return {
+            defaults: {
+                title: post?.title || '',
+                text: post?.text || '',
+                html: post?.html || '',
+                tags: post?.tags.join(',') || ''
+            }, video_supports: global_config.post.video_supports, upload_file_size_limit: global_config.post.upload_file_size_limit, ...global_config.post.content
+        }
+    })
+
+    const postView = plugin.definedView('post.ejs', () => {
         return { video_supports: global_config.post.video_supports, upload_file_size_limit: global_config.post.upload_file_size_limit, ...global_config.post.content }
     })
 
-    const postView = plugin.definedView('post.ejs')
-
     plugin.definePage({
         path: '/editor',
-        render: postEditorView.render
+        render: async (req, res) => {
+            if (PassportPlugin.sessions.get(req, 'user') === undefined) {
+                return res.redirect('/passport/login')
+            }
+            return postEditorView.render(req)
+        }
     })
+
+
 
     plugin.api('/upload', permission(), async (req, res) => {
         // 上传频率检测
@@ -138,6 +163,110 @@ definePlugin({
     })
 
 
+    plugin.api('/comment', permission(), plugin.validator((req) => req.body, {
+        text: {
+            type: 'string', name: i18n('_model_.post.content'), required: true,
+            min_length: global_config.post.content.content_min_length,
+            max_length: global_config.post.content.content_max_length
+        },
+        category_uid: { type: 'string', required: true },
+        post_uid: { type: 'string', required: true },
+    }), async (req, res) => {
+        const { html, text, category_uid, parent_uid, deleted_images = '[]', post_uid = '' } = req.body
+        const user = PassportPlugin.sessions.get(req, 'user')!
+
+        // 分区检测
+        const category = await CategoryDocument.findByUid(category_uid)
+        if (!category) {
+            return plugin.sendError(req, res, 404)
+        }
+
+        // 删除未使用的图片
+        const deleted_images_array = JSON.parse(deleted_images)
+        if (Array.isArray(deleted_images_array) === false) {
+            return plugin.sendError(req, res, 400)
+        }
+        await Promise.all(deleted_images_array.map(path => {
+            return deleteAttachment(path)
+        }))
+
+        // 敏感词检测
+        const text_sensitive_words = ContentUtils.detectSensitiveWords(text)
+        if (text_sensitive_words) {
+            return plugin.sendError(req, res, 400, i18n('post.form.content_has_sensitive_words', { words: text_sensitive_words.join(',') }))
+        }
+
+        // 帖子检测
+        const post = await PostDocument.findByUId(post_uid)
+        if (!post) {
+            return plugin.sendError(req, res, 400, i18n('post.error.post_not_exist'))
+        }
+
+        await CommentDocument.create({ user_uid: user.uid, category_uid, post_uid, parent_uid, text, html })
+
+        res.redirect(`/p/${post.short_id}`)
+    })
+
+    plugin.api('/like-comment', permission(), async (req, res) => {
+        const user = PassportPlugin.sessions.get(req, 'user')!
+        const uid = req.query.uid?.toString()?.trim() || ''
+        if (hasBlankParams(uid)) {
+            return plugin.sendError(req, res, 400)
+        }
+        await UserLikeCommentDocument.toggle(user.uid, uid)
+        res.sendStatus(200)
+    })
+
+
+    plugin.api('/remove-comment', permission(), async (req, res) => {
+        // comment_short_id
+        const cid = req.query.cid?.toString()?.trim() || ''
+        // post_short_id
+        const pid = req.query.pid?.toString()?.trim() || ''
+        if (hasBlankParams(cid)) {
+            return plugin.sendError(req, res, 400)
+        }
+        const user = PassportPlugin.sessions.get(req, 'user')!
+        const comment = await CommentDocument.findByShortId(cid)
+        if (!comment) {
+            return plugin.sendError(req, res, 404)
+        }
+        if (comment.user_uid !== user.uid) {
+            return plugin.sendError(req, res, 403)
+        }
+        await CommentDocument.remove(comment.uid)
+
+        res.redirect(`/p/${pid}`)
+    })
+
+
+    plugin.api('/comment-redirect', permission(), async (req, res) => {
+        // comment_short_id
+        const cid = req.query.cid?.toString()?.trim() || ''
+        // post_short_id
+        const pid = req.query.pid?.toString()?.trim() || ''
+        if (hasBlankParams(cid, pid)) {
+            return plugin.sendError(req, res, 400)
+        }
+
+        const post = await PostDocument.findByShortId(pid)
+        if (!post) {
+            return plugin.sendError(req, res, 404)
+        }
+
+        let page = 1;
+        const count = await CommentDocument.count(post.uid)
+        while ((page - 1) * global_config.post.pagination.size < count) {
+            const comment_docs = await CommentDocument.list(post.uid, page, global_config.post.pagination.size)
+            const result = comment_docs.find(c => c.short_id === cid)
+            if (result) {
+                return res.redirect(`/p/${pid}?p=${page}#${result.short_id.slice(0, 6)}`)
+            }
+            page++
+        }
+    })
+
+
     plugin.api('/editor', permission(), plugin.validator((req) => req.body, {
         title: {
             type: 'string', name: i18n('_model_.post.title'), required: true,
@@ -150,17 +279,17 @@ definePlugin({
             max_length: global_config.post.content.content_max_length
         },
         category_uid: {
-            type: 'string', name: 'category_uid', required: true
+            type: 'string', required: true
         },
     }, postEditorView), async (req, res) => {
-        const { title, html, text, category_uid, deleted_images = '[]', tags = '', draft = '' } = req.body
+        const { title, html, text, category_uid, pid, deleted_images = '[]', tags = '', draft = '' } = req.body
 
         const user = PassportPlugin.sessions.get(req, 'user')!
 
         // 删除未使用的图片
         const deleted_images_array = JSON.parse(deleted_images)
         if (Array.isArray(deleted_images_array) === false) {
-            return res.send(await postEditorView.render(req, { error: i18n('post.form.bad_params') }))
+            return plugin.sendError(req, res, 400)
         }
         await Promise.all(deleted_images_array.map(path => {
             return deleteAttachment(path)
@@ -189,32 +318,30 @@ definePlugin({
             return res.send(await postEditorView.render(req, { error: i18n('post.error.category_not_exist') }))
         }
 
-        const post = await PostDocument.create({ category_uid, user_uid: user.uid, text, html, title: title, tags: tags_value, draft: draft_value })
-
-        res.redirect(`/p/${post.short_id}`)
+        if (!pid) {
+            const post = await PostDocument.create({ category_uid, user_uid: user.uid, text, html, title: title, tags: tags_value, draft: draft_value })
+            return res.redirect(`/p/${post.short_id}`)
+        } else {
+            const post = await PostDocument.findByShortId(pid)
+            if (!post) {
+                return res.send(await postEditorView.render(req, { error: i18n('post.error.post_not_exist') }))
+            }
+            await PostDocument.update(post.uid, { text, html, title, tags: tags_value, draft: draft_value })
+            return res.redirect(`/p/${post.short_id}`)
+        }
     })
 
-    app.get('/p/:post_id', async (req, res, next) => {
+    app.get('/p/:post_short_id', async (req, res, next) => {
         // 没有使用 plugin.api ，所以这里需要自己捕获异常
         try {
-            const { post_id } = req.params
-            const page = req.query.page?.toString().trim() || '1'
-            if (hasBlankParams(post_id)) {
+            const user = PassportPlugin.sessions.get(req, 'user')
+            const { post_short_id } = req.params
+            const page = req.query.p?.toString().trim() || '1'
+            if (hasBlankParams(post_short_id)) {
                 return plugin.sendError(req, res, 400)
             }
 
-            const page_value = parseInt(page)
-            const comments_count = await CommentDocument.count(post_id)
-            const comment_docs = await CommentDocument.list(post_id, page_value, global_config.post.pagination.size)
-            const comments = await Promise.all(comment_docs.map(async c => {
-                return {
-                    ...c.toJSON(),
-                    user: c.user_uid ? await UserDocument.findOne({ uid: c.user_uid }) : undefined
-                }
-            }))
-
-
-            const post = await PostDocument.findByShortId(post_id)
+            const post = await PostDocument.findByShortId(post_short_id)
             if (!post) {
                 return plugin.sendError(req, res, 404)
             }
@@ -223,9 +350,31 @@ definePlugin({
             if (!category) {
                 return plugin.sendError(req, res, 404)
             }
-            const user = await UserDocument.findOne({ uid: post.user_uid })
-            res.send(await postView.render(req, { category: category.toJSON(), post: { ...post.toJSON(), user: user?.toJSON() }, comments_count, comments }))
 
+            const author = await UserDocument.findOne({ uid: post.user_uid })
+            if (!author) {
+                return plugin.sendError(req, res, 404)
+            }
+
+            const page_value = parseInt(page)
+            const comments_count = await CommentDocument.count(post.uid)
+            const comment_docs = await CommentDocument.list(post.uid, page_value, global_config.post.pagination.size)
+            const comments = await Promise.all(comment_docs.map(async c => {
+                const parent_doc = c.parent_uid ? await CommentDocument.findByUid(c.parent_uid) : undefined
+                return {
+                    ...c.toJSON(),
+                    user: c.user_uid ? await UserDocument.findOne({ uid: c.user_uid }) : undefined,
+                    liked: user ? await UserLikeCommentDocument.isLiking(user.uid, c.uid) : undefined,
+                    parent: parent_doc ? { ...parent_doc.toJSON(), user: parent_doc.user_uid ? await UserDocument.findOne({ uid: parent_doc.user_uid }) : undefined } : undefined
+                }
+            }))
+
+            res.send(await postView.render(req, { category: category.toJSON(), post: { ...post.toJSON(), user: author?.toJSON() }, comments_count, comments }))
+
+            // 记录访问量 
+            if (user) {
+                await UserViewDocument.view(user.uid, post.uid)
+            }
         } catch (e) {
             plugin.sendError(req, res, 500, e.message)
         }

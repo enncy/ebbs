@@ -8,7 +8,7 @@ import { i18n } from "../i18n";
 import { baseUrl, SignUtils } from "src/utils";
 import { ViewRenderEvent } from "src/events/page";
 
-
+ 
 export class UserPreEmailLoginEvent extends CancellableEvent {
     constructor(public email: string, public ip: string) {
         super()

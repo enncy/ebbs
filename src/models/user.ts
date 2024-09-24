@@ -1,11 +1,6 @@
 import { defineModel } from "src/core/plugins"
 import { uuid } from "./utils"
-import { SignUtils } from "src/utils"
-import { UploadedFile } from "express-fileupload"
-import { global_config } from "ebbs.config"
-import { join, resolve } from "path"
-import fs from 'fs';
-import dayjs from "dayjs"
+import { SignUtils } from "src/utils" 
 
 export class UserDocument {
     uid: string
@@ -25,7 +20,7 @@ export class UserDocument {
     statistics: {
         posts: number
         comments: number
-        likes: number
+        follows: number
         fans: number
     }
 
@@ -120,7 +115,7 @@ export const UserModel = defineModel<UserDocument>('User',
         statistics: {
             posts: { type: Number, default: 0 },
             comments: { type: Number, default: 0 },
-            likes: { type: Number, default: 0 },
+            follows: { type: Number, default: 0 },
             fans: { type: Number, default: 0 }
         }
     },

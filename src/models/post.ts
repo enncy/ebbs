@@ -23,10 +23,23 @@ export class PostDocument {
     last_edit_at: number
     last_comment_at: number
     statistics: {
+        views: number
         likes: number
         comments: number
-        views: number
+        follows: number
     }
+
+    public static async findByUId(uid: string) {
+        const post = await PostModel.findOne({ uid })
+        if (!post) {
+            return null
+        }
+        if (post.deleted || post.draft) {
+            return null
+        }
+        return post
+    }
+
 
     public static async findByShortId(short_id: string) {
         const post = await PostModel.findOne({ short_id })
@@ -98,7 +111,7 @@ export class PostDocument {
             last_edit_at: 0,
             last_comment_at: 0,
             permissions: [],
-            statistics: { likes: 0, comments: 0, views: 0 }
+            statistics: { likes: 0, comments: 0, views: 0, follows: 0 }
         })
     }
 
@@ -205,7 +218,8 @@ export const PostModel = defineModel<PostDocument>('Post',
         statistics: {
             likes: { type: Number, default: 0 },
             comments: { type: Number, default: 0 },
-            views: { type: Number, default: 0 }
+            views: { type: Number, default: 0 },
+            follows: { type: Number, default: 0 }
         }
     },
     {

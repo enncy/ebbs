@@ -314,7 +314,7 @@ export abstract class Plugin<
                     if (error_view) {
                         res.send(await error_view.render(req, { validator_error: err }))
                     } else {
-                        res.send(err)
+                        this.sendError(req, res, 400, err)
                     }
                 })
 
@@ -323,7 +323,7 @@ export abstract class Plugin<
                     if (error_view) {
                         res.send(await error_view.render(req, { validator_error: err }))
                     } else {
-                        res.send(err)
+                        this.sendError(req, res, 400, err)
                     }
                 })
 

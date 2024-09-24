@@ -15,7 +15,7 @@ export interface PluginConfig<Sessions extends Record<string, any> = any, Settin
 export interface Page<R = {}> {
     path: string;
     custom_path?: boolean;
-    render: (req: Request & R, res: Response) => string |  undefined | Promise<string | undefined> 
+    render: (req: Request & R, res: Response) => string |  undefined | void | Promise<string | undefined | void> 
 }
 
 export interface PluginView {

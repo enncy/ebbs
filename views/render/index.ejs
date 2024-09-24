@@ -26,8 +26,7 @@
   }
 
   .category .statistics {
-    flex: 0 auto;
-    min-width: 128px;
+    flex: 0 auto; 
     font-size: 14px;
   }
 
@@ -39,6 +38,22 @@
   .category .name {
     font-size: 1.2rem;
     font-weight: bold;
+  }
+
+  .category .description {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .side {
+    max-width: 400px;
+  }
+
+
+  @media screen and (max-width: 768px) {
+    .side {
+      max-width: 100%;
+    }
   }
 </style>
 
@@ -60,7 +75,7 @@
           <div class="categorys">
             <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
             <% const category_group = locals.category_groups[i]; %>
-
+ 
             <div class="card">
               <h5 class="card-header"><%= category_group.name %></h5>
               <div class="card-body">
@@ -73,7 +88,7 @@
                       <div class="name"><%= item.name %></div>
                       <div class="description"><%= item.description %></div>
                     </div>
-                    <div class="statistics text-secondary">
+                    <div class="statistics p-1 p-lg-2 text-secondary">
                       <div>主题 : <%= item.statistics.posts %></div>
                       <div>回帖 : <%= item.statistics.comments  %></div>
                     </div>
@@ -91,21 +106,20 @@
           </div>
           <% } %>
         </div>
-        <div style="max-width: 400px;" class="col-lg-4 col-12">
+
+        <div class="side col-lg-4 col-12 mt-3 mt-lg-0">
 
           <div class="card mb-3">
-            <h5 class="card-header">热门帖子</h5>
+            <h5 class="card-header fs-6">热门帖子</h5>
             <div class="card-body">
-              <p class="card-text">xxxxxxx</p>
- 
+              <p class="card-text">暂无数据</p> 
             </div>
           </div>
 
           <div class="card">
-            <h5 class="card-header">精华帖子</h5>
+            <h5 class="card-header fs-6">精华帖子</h5>
             <div class="card-body">
-              <p class="card-text"> xxxx </p>
- 
+              <p class="card-text"> 暂无数据 </p> 
             </div>
           </div>
         </div>
