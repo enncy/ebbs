@@ -3,34 +3,6 @@
 
 <head>
   <%- include('/views/header') %>
-
-  <script src="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2018/jodit.fat.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2015/jodit.min.css">
-  <style>
-    .container form {
-      background-color: white;
-      border-radius: 4px;
-      padding: 24px;
-    }
-
-    .extra-functions {
-      padding: 4px 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      display: inline-block;
-    }
-
-    .emoji {
-      font-size: 16px;
-      padding: 2px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .emoji:hover {
-      background-color: #f0f0f0;
-    }
-  </style>
 </head>
 
 <body>
@@ -44,23 +16,20 @@
 
       <form method="post" action="/post/editor?category_uid=<%= locals.query.category_uid %>">
 
+        <input name="category_uid" type="hidden" value="<%= locals.query.category_uid %>">
+        <input name="pid" type="hidden" value="<%= locals.query.pid %>">
+
         <h1>
           <%= i18ns('_model_.post','_dict_.edit') %>
         </h1>
+
         <hr />
 
-        <input name="deleted_images" type="hidden">
-        <input name="category_uid" type="hidden" value="<%= locals.query.category_uid %>">
-        <textarea id="html" name="html" style="display:none;">  <%- locals.body?.html || '' %>  </textarea>
-        <textarea id="text" name="text" style="display:none;"> </textarea>
-
         <div class="d-flex mb-2 align-items-center">
-          <div class="flex-fill"><input type="text" name="title" class="form-control" required value="<%= locals.body?.title %>" placeholder="<%= i18ns('_dict_.input','_model_.post.title') %>..." minlength="<%= locals.title_min_length %>" maxlength="<%= locals.title_max_length %>" /></div>
+          <div class="flex-fill"><input type="text" name="title" class="form-control" required value="<%= locals.body?.title  || defaults.title  %>" placeholder="<%= i18ns('_dict_.input','_model_.post.title') %>..." minlength="<%= locals.title_min_length %>" maxlength="<%= locals.title_max_length %>" /></div>
         </div>
         <div class="mt-2">
-          <div>
-            <div id="jodit-editor"></div>
-          </div>
+          <%- include('/views/components/post.editor.ejs', { body: { html: locals.body?.html || defaults.html,  text: locals.body?.text || defaults.text } }) %>
         </div>
         <div class="d-flex align-items-center">
           <div class="flex-fill">
@@ -68,7 +37,7 @@
             <!-- 标签编辑弹窗 -->
             <%- include('/views/components/dialog.start.ejs', { id:'tagModal', title: i18ns('_dict_.add','_model_.post.tag')  })  %>
             <small class=" text-secondary"><%= i18n('post.form.tag_note.use_space_or_comma_to_split') %></small>
-            <input type="text" name="tags" class="form-control mt-2 mb-2" value="<%= locals.body?.tags %>">
+            <input type="text" name="tags" class="form-control mt-2 mb-2" value="<%= locals.body?.tags || defaults.tags %>">
             <%- include('/views/components/dialog.end.ejs')  %>
             <a href="#" data-bs-toggle="modal" data-bs-target="#tagModal" class="extra-functions"><%= i18ns('_dict_.add','_model_.post.tag') %>+</a>
 
@@ -77,275 +46,12 @@
               <%= i18n('_model_.post.draft') %> <input type="checkbox" name="draft" class="form-check-input" id="draft" <%= locals.body?.draft ? 'checked': '' %>>
             </div>
           </div>
-          <div class="flex-auto"> <button type="button" onclick="submitPost()" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button></div>
+          <div class="flex-auto"> <button type="button" onclick="JoditUtils.submitPost('form')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button></div>
         </div>
       </form>
 
     </div>
   </div>
-
-  <script>
-    const inserted_images = []
-    const error_message_duration = 10 * 1000
-    const emojis = '<%= settings.editor.emojis %>'.split(',')
-    const upload_file_size_limit = parseInt(`<%= locals.upload_file_size_limit || 5 %>`)
-    const video_supports = JSON.parse(decodeURI('<%=  encodeURI(JSON.stringify(locals.video_supports))  %>'))
-
-    const tags_max_length = parseInt(`<%= locals.tags_max_length || 5 %>`)
-    const content_min_length = parseInt(`<%= locals.content_min_length || 10 %>`)
-    const content_max_length = parseInt(`<%= locals.content_max_length || 10000 %>`)
-
-    console.log('config', {
-      emojis,
-      upload_file_size_limit,
-      tags_max_length,
-      content_min_length,
-      content_max_length
-    })
-
-
-    function submitPost() {
-      const form_el = document.querySelector('form')
-      const images = jodit.editor.querySelectorAll('img')
-      const image_urls = Array.from(images).map(image => image.src)
-      // 判断文本
-      const form_data = new FormData(form_el)
-      const content = form_data.get('text').toString()
-
-      // 判断标签
-      const tags = form_data.get('tags').toString().split(' ').filter(tag => tag.trim())
-      if (tags.length > tags_max_length) {
-        return alert(`<%= i18n('post.form.tags_length_limit', {max: locals.tags_max_length || 5}) %>`)
-      }
-
-      // 找出已删除的图片
-      const deleted_images = inserted_images.filter(image => !image_urls.some(u => u.includes(encodeURI(image))))
-      document.querySelector('input[name="deleted_images"]').value = JSON.stringify(deleted_images)
-      form_el.submit()
-    }
-
-    const buttons = [
-      'bold',
-      'strikethrough',
-      'underline',
-      'hr',
-      'italic', '|',
-      'font',
-      'fontsize',
-      'brush', '|',
-      'ul',
-      'ol',
-      'paragraph', '|',
-      'outdent', 'indent',
-      'align', '|',
-      'custom_emoji',
-      'image',
-      'custom_video',
-      'link',
-      'table', '|',
-      'undo', 'redo'
-    ]
-
-    const buttons_simple = [
-      'bold',
-      'custom_emoji',
-      'image',
-      'custom_video',
-      'link',
-      'table',
-      'dots'
-    ]
-
-    const jodit = Jodit.make('#jodit-editor', {
-      language: 'zh_cn',
-      height: 600,
-      askBeforePasteHTML: false,
-      defaultActionOnPaste: Jodit.INSERT_AS_HTML,
-      link: {
-        processVideoLink: false
-      },
-      buttons: buttons,
-      buttonsMD: buttons,
-      buttonsSM: buttons_simple,
-      buttonsXS: buttons_simple,
-      controls: {
-        custom_video: {
-          name: 'custom_video',
-          icon: 'video',
-          popup: function(editor, current, close) {
-            const form = new Jodit.modules.UIForm(jodit, [
-              new Jodit.modules.UIInput(editor, {
-                required: true,
-                label: '<%= i18n("_dict_.video_link") %> (<%= locals.video_supports.map(s=>s.name).join(",") %>)',
-                name: 'url',
-                type: 'text',
-                placeholder: 'https://...'
-              }),
-              new Jodit.modules.UIBlock(editor, [new Jodit.modules.UIButton(editor, {
-                text: '<%= i18n("_dict_.insert") %>',
-                variant: 'primary',
-                type: 'submit'
-              })])
-            ]);
-            form.onSubmit(data => {
-              const url = data.url
-              if (!url) {
-                return;
-              }
-              if (url.indexOf('http') !== 0) {
-                return jodit.message.message(`<%= i18n('post.form.invalid_video_src') %>`, 'error', error_message_duration);
-              }
-              if (video_supports.length === 0) {
-                return jodit.message.message(`<%= i18n('post.form.invalid_supports_video_domain') %>`, 'error', error_message_duration);
-              }
-              const support = video_supports.find(support => url.includes(support.domain))
-              if (!support) {
-                return jodit.message.message(`<%= i18n('post.form.unsupported_video_domain') %>`, 'error', error_message_duration);
-              }
-
-              const parsed_url = new URL(url)
-
-              const replacements = {
-                url
-              }
-
-              const params = Object.fromEntries(parsed_url.searchParams)
-              Object.keys(params).forEach(key => {
-                replacements[`params.${key}`] = params[key]
-              })
-
-              parsed_url.pathname.split('/').filter(part => part).forEach((part, index) => {
-                replacements[`path[${index}]`] = part
-              })
-
-              console.log(replacements)
-
-              const video_iframe = String(support.iframe_template).trim().replace(/\{\{(.*?)\}\}/g, (_, key) => {
-                return replacements[key] || ''
-              })
-              console.log(video_iframe)
-
-              jodit.s.restore();
-              jodit.s.insertHTML(video_iframe)
-              close();
-
-              return false
-            });
-            return form
-          }
-        },
-        custom_emoji: {
-          name: 'custom_emoji',
-          icon: '<svg height="1792" viewBox="0 0 1792 1792" width="1792" xmlns="http://www.w3.org/2000/svg" class="jodit-icon"> <path d="M1262 1075q-37 121-138 195t-228 74-228-74-138-195q-8-25 4-48.5t38-31.5q25-8 48.5 4t31.5 38q25 80 92.5 129.5t151.5 49.5 151.5-49.5 92.5-129.5q8-26 32-38t49-4 37 31.5 4 48.5zm-494-435q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm512 0q0 53-37.5 90.5t-90.5 37.5-90.5-37.5-37.5-90.5 37.5-90.5 90.5-37.5 90.5 37.5 37.5 90.5zm256 256q0-130-51-248.5t-136.5-204-204-136.5-248.5-51-248.5 51-204 136.5-136.5 204-51 248.5 51 248.5 136.5 204 204 136.5 248.5 51 248.5-51 204-136.5 136.5-204 51-248.5zm128 0q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-279.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 385.5z"></path> </svg>',
-          popup: function(editor, current, close) {
-            const line_count = 10
-            const container = document.createElement('div')
-            for (let i = 0; i < emojis.length / line_count; i++) {
-              const row = emojis.slice(i * line_count, (i + 1) * line_count)
-              const row_container = document.createElement('div')
-              row_container.style.display = 'flex'
-              row_container.style.justifyContent = 'space-around'
-              container.append(row_container)
-              for (const emoji of row) {
-                const span = document.createElement('span')
-                span.innerText = emoji
-                span.className = 'emoji'
-                span.onclick = () => {
-                  jodit.s.restore();
-                  jodit.s.insertHTML(emoji)
-
-                }
-                row_container.append(span)
-              }
-            }
-            return container
-          }
-        }
-      },
-      uploader: {
-        url: '/post/upload',
-        buildData: function(data) {
-          const file = data.get('files[0]')
-          // 如果文件太大
-          if (file.size > upload_file_size_limit * 1024 * 1024) {
-            const error = `<%= i18n('post.upload.file_too_large', {max_size: locals.upload_file_size_limit + 'MB'}) %>`
-            jodit.message.message(error, 'error', error_message_duration);
-            throw new Error(error)
-          }
-          const form = new FormData()
-          form.append('file', file);
-          return form
-        },
-        isSuccess: function(resp) {
-          return !resp.error;
-        },
-        getMessage: function(resp) {
-          return resp.error;
-        },
-        process: function(resp) {
-          return resp
-        },
-        defaultHandlerSuccess: function(data, resp) {
-          if (data?.url) {
-            inserted_images.push(data.url)
-            this.s.insertImage(data.url);
-          } else {
-            jodit.message.message('unknown error', 'error', error_message_duration);
-          }
-        },
-        error: function(e) {
-          jodit.message.message(e.getMessage(), 'error', error_message_duration);
-        }
-      }
-    });
-
-    jodit.value = document.getElementById('html').value;
-
-    jodit.events.on('change', function() {
-      document.getElementById('html').value = jodit.value;
-      const container = jodit.editor.cloneNode(true)
-      try {
-        container.querySelectorAll('img').forEach(image => {
-          image.replaceWith('[图片]')
-        })
-        container.querySelectorAll('iframe').forEach(image => {
-          image.replaceWith('[视频]')
-        })
-        document.getElementById('text').value = container.innerText
-      } catch (e) {
-        console.error(e)
-      }
-    });
-
-    jodit.events.on('keydown', function(e) {
-      if (e.keyCode === 9) { // tab key
-        e.preventDefault(); // this will prevent us from tabbing out of the editor
-
-        // now insert four non-breaking spaces for the tab key
-        var editor = jodit.editor
-        var doc = editor.ownerDocument.defaultView;
-        var sel = doc.getSelection();
-        var range = sel.getRangeAt(0);
-
-        var tabNode = document.createTextNode("\u00a0\u00a0\u00a0\u00a0");
-        range.insertNode(tabNode);
-
-        range.setStartAfter(tabNode);
-        range.setEndAfter(tabNode);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-    });
-
-    // 初始化已插入的图片
-    inserted_images.push(...Array.from(jodit.editor.querySelectorAll('img')).map(image => image.src.replace(location.origin, '')))
-
-    console.log({
-      jodit,
-      inserted_images,
-      value: jodit.value
-    })
-  </script>
 </body>
 
 </html>
