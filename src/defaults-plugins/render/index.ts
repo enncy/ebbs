@@ -15,7 +15,7 @@ import { CommentDocument } from "src/models/comment";
 import { UserDocument } from "src/models/user";
 import { CategoryGroupDocument } from "src/models/category_group";
 import { UserViewDocument } from "src/models/state/user.view";
-import { UserLikeCommentDocument } from "src/models/state/user.like.comment";
+import { UserFollowPostDocument } from "src/models/state/user.follow.post";
 
 
 definePlugin({
@@ -46,7 +46,7 @@ definePlugin({
         custom_path: true,
         render: async (req) => {
             const id = req.query.id?.toString().trim()
-            const page = req.query.page?.toString().trim() || '1'
+            const page = req.query.p?.toString().trim() || '1'
             if (hasBlankParams(id, page)) {
                 return
             }
@@ -60,12 +60,13 @@ definePlugin({
                 return
             }
             page_value = Math.min(Math.max(1, page_value), global_config.category.max_page)
-            const post_docs = await PostDocument.list({ category_uid: cat.uid, page: page_value - 1, size: size, })
+            const post_docs = await PostDocument.list({ category_uid: cat.uid, page: page_value, size: size, })
+            const post_count = await PostDocument.count({ category_uid: cat.uid })
             const posts = await Promise.all(post_docs.map(async p => {
                 const user = await UserDocument.findOne({ uid: p.user_uid })
                 return { ...p.toJSON(), user: user?.toJSON() }
             }))
-            return await categoryView.render(req, { category: cat, posts })
+            return await categoryView.render(req, { category: cat, posts, total_page: Math.ceil(post_count / size) })
         }
     })
 })
@@ -79,7 +80,7 @@ definePlugin({
         '/editor': 'post',
         '/upload': 'post',
         '/comment': 'post',
-        '/like-comment': 'get',
+        '/follow': 'get',
         '/remove-comment': 'get',
         '/comment-redirect': 'get', // TODO
     },
@@ -87,18 +88,8 @@ definePlugin({
         latest_upload_time: Number
     },
 }, (plugin, app) => {
-    const postEditorView = plugin.definedView('post.editor.ejs', async (req) => {
-        // post_short_id
-        const pid = req.query.pid?.toString().trim()
-        const post = pid ? await PostDocument.findByShortId(pid) : null
-        return {
-            defaults: {
-                title: post?.title || '',
-                text: post?.text || '',
-                html: post?.html || '',
-                tags: post?.tags.join(',') || ''
-            }, video_supports: global_config.post.video_supports, upload_file_size_limit: global_config.post.upload_file_size_limit, ...global_config.post.content
-        }
+    const postEditorView = plugin.definedView('post.editor.ejs', async () => {
+        return { video_supports: global_config.post.video_supports, upload_file_size_limit: global_config.post.upload_file_size_limit, ...global_config.post.content }
     })
 
     const postView = plugin.definedView('post.ejs', () => {
@@ -108,10 +99,26 @@ definePlugin({
     plugin.definePage({
         path: '/editor',
         render: async (req, res) => {
-            if (PassportPlugin.sessions.get(req, 'user') === undefined) {
+            const user = PassportPlugin.sessions.get(req, 'user')
+            if (user === undefined) {
                 return res.redirect('/passport/login')
             }
-            return postEditorView.render(req)
+            // post_short_id
+            const pid = req.query.pid?.toString().trim()
+            const post = pid ? await PostDocument.findByShortId(pid) : null
+            console.log(post);
+
+            if (post && post.user_uid !== user.uid) {
+                return plugin.sendError(req, res, 403)
+            }
+            return postEditorView.render(req, {
+                defaults: {
+                    title: post?.title || '',
+                    text: post?.text || '',
+                    html: post?.html || '',
+                    tags: post?.tags.join(',') || ''
+                }
+            })
         }
     })
 
@@ -163,6 +170,17 @@ definePlugin({
     })
 
 
+    plugin.api('/follow', permission(), async (req, res) => {
+        const user = PassportPlugin.sessions.get(req, 'user')!
+        const uid = req.query.uid?.toString()?.trim() || ''
+        if (hasBlankParams(uid)) {
+            return plugin.sendError(req, res, 400)
+        }
+        await UserFollowPostDocument.toggle(user.uid, uid)
+        res.sendStatus(200)
+    })
+
+
     plugin.api('/comment', permission(), plugin.validator((req) => req.body, {
         text: {
             type: 'string', name: i18n('_model_.post.content'), required: true,
@@ -205,16 +223,6 @@ definePlugin({
         await CommentDocument.create({ user_uid: user.uid, category_uid, post_uid, parent_uid, text, html })
 
         res.redirect(`/p/${post.short_id}`)
-    })
-
-    plugin.api('/like-comment', permission(), async (req, res) => {
-        const user = PassportPlugin.sessions.get(req, 'user')!
-        const uid = req.query.uid?.toString()?.trim() || ''
-        if (hasBlankParams(uid)) {
-            return plugin.sendError(req, res, 400)
-        }
-        await UserLikeCommentDocument.toggle(user.uid, uid)
-        res.sendStatus(200)
     })
 
 
@@ -359,17 +367,23 @@ definePlugin({
             const page_value = parseInt(page)
             const comments_count = await CommentDocument.count(post.uid)
             const comment_docs = await CommentDocument.list(post.uid, page_value, global_config.post.pagination.size)
+
             const comments = await Promise.all(comment_docs.map(async c => {
                 const parent_doc = c.parent_uid ? await CommentDocument.findByUid(c.parent_uid) : undefined
                 return {
                     ...c.toJSON(),
                     user: c.user_uid ? await UserDocument.findOne({ uid: c.user_uid }) : undefined,
-                    liked: user ? await UserLikeCommentDocument.isLiking(user.uid, c.uid) : undefined,
                     parent: parent_doc ? { ...parent_doc.toJSON(), user: parent_doc.user_uid ? await UserDocument.findOne({ uid: parent_doc.user_uid }) : undefined } : undefined
                 }
             }))
 
-            res.send(await postView.render(req, { category: category.toJSON(), post: { ...post.toJSON(), user: author?.toJSON() }, comments_count, comments }))
+            res.send(await postView.render(req, {
+                category: category.toJSON(), post: {
+                    ...post.toJSON(),
+                    followed: user ? await UserFollowPostDocument.isFollowing(user.uid, post.uid) : undefined,
+                    user: author?.toJSON()
+                }, comments_count, comments, total_page: Math.ceil(comments_count / global_config.post.pagination.size)
+            }))
 
             // 记录访问量 
             if (user) {

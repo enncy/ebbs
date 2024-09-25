@@ -14,7 +14,7 @@ export class CommentDocument {
     statistics: { 
         comments: number
     }
- 
+
     public static findByUid(uid: string) {
         return CommentModel.findOne({ uid: uid })
     }
@@ -40,7 +40,7 @@ export class CommentDocument {
 
 
     public static async create(opts: { user_uid: string, category_uid: string, post_uid: string, html: string, text: string, parent_uid?: string }) {
-        const short_id = await randomShortId(async (id) => !await CommentModel.findOne({ short_id: id }))
+        const short_id = await randomShortId(async (id) => !await CommentModel.findOne({ short_id: id })) 
         return await CommentModel.create({
             uid: uuid(),
             short_id: short_id,
@@ -51,10 +51,10 @@ export class CommentDocument {
             html: opts.html,
             text: opts.text,
             post_at: Date.now(),
-            statistics: {
+            statistics: { 
                 comments: 0
             }
-        })
+        } )
     }
 
 }

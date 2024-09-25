@@ -95,6 +95,8 @@ export class ContentUtils {
             return worlds.length === 0 ? [str] : worlds;
         }
 
+        // 排除空词
+        keys = keys.filter((k) => k.trim());
         // 排除忽略词
         keys = keys.filter((k) => !ContentUtils.segment_ignore_words.has(k));
 

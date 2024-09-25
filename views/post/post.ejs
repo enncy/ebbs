@@ -1,5 +1,7 @@
 <% 
       
+const href_template =  `/p/${post.short_id}?p={{page}}` 
+
 %>
 
 <style>
@@ -117,6 +119,11 @@
     border-radius: 4px;
   }
 
+  .comment-anchor {
+    position: relative;
+    top: -64px;
+  }
+
   @media screen and (max-width: 742px) {
 
     .post-wrapper {
@@ -128,11 +135,11 @@
       padding: 0px;
       margin: 0px;
       border: none;
-      background-color: #fafafa;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e0e0e0;
       display: block;
       border-radius: 4px;
       max-width: none;
-
       font-size: 14px;
     }
 
@@ -151,7 +158,7 @@
       border: 1px solid #e0e0e0;
       border-radius: 4px;
       background-color: white;
-      margin: 12px 0px;
+      margin: 0px;
     }
 
     .user-avatar {
@@ -203,8 +210,15 @@
         </div>
 
 
-        <div class="d-flex post-wrapper p-lg-4 p-0 mt-3">
+        <div class="d-flex post-wrapper p-lg-4 pt-lg-2 p-0 mt-3">
 
+          <div class="col-12  mb-lg-2 ps-1 ps-lg-0 pe-1 pe-lg-0">
+            <%- include('/views/components/pagination.ejs',{total_page: locals.total_page, current: locals.query.p || '1' , href_template:  href_template }) %>
+          </div>
+
+
+          <!-- 如果不是第一页，则不显示帖子 -->
+          <% if((locals.query?.p || '1') === '1'){ %>
           <div class="d-flex flex-wrap col-12 main-content">
             <div class="post-users-wrapper pt-lg-3 pb-lg-3 me-lg-3   flex-auto">
               <div class="text-lg-center d-flex d-lg-block align-items-center p-2 p-lg-0 gap-3">
@@ -222,21 +236,21 @@
                   <% if(post.user.nickname?.trim()){ %>
                   <div class="d-inline-block d-lg-block"><small><%= post.user.nickname  %></small></div>
                   <% } %>
-                  <div class="d-inline-block d-lg-block"><small>帖子：1</small></div>
-                  <div class="d-inline-block d-lg-block"><small>粉丝：1</small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= post.user.statistics.posts %></small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= post.user.statistics.fans %></small></div>
                 </div>
               </div>
             </div>
 
             <div class="p-lg-0 p-1 flex-fill">
               <div class="title"><b><%= post.title %></b></div>
-              <div class="d-flex flex-wrap mt-2">
+              <div class="d-flex flex-wrap align-items-center text-secondary mt-2">
                 <div class="flex-fill">
                   <small>发布于：<%= dayjs(post.post_at)  %></small>
                 </div>
                 <div class="flex-auto">
-                  <small>查看：<%= post.statistics.comments %></small>
-                  <span class="vertical-divider"></span>
+                  <small>查看：<%= post.statistics.views %></small>
+                  <span class="split">|</span>
                   <small>回帖：<%= post.statistics.comments %></small>
                 </div>
               </div>
@@ -244,7 +258,7 @@
               <div class="post-content pt-1 pb-1">
                 <div class="d-flex flex-wrap" style=" align-content: space-between">
                   <div class="h-auto col-12">
-                    <div class="leap"><%- post.html %></div>
+                    <div class="leap post-html"><%- post.html %></div>
                   </div>
                   <!-- 操作区域 -->
                   <div class="pb-1 col-12">
@@ -254,8 +268,14 @@
                         <% if(post.user.uid === locals.user?.uid){ %>
                         <a class="action" href="/post/editor?category_uid=<%= post.category_uid %>&pid=<%= post.short_id %>"><small> 编辑 </small></a>
                         <% }else{ %>
-                        <a class="action like-action"><small class="like-button"> 点赞 </small></a>
-                        <a class="action" href="#"><small> 订阅 </small></a>
+
+
+                        <% if(post.followed){ %>
+                        <a class="action follow-action text-decoration-none " onclick="togglePostFollow('not-follow','<%= post.short_id %>','<%= post.uid %>')"><small class="follow-button text-secondary"> 已订阅 </small></a>
+                        <% }else{ %>
+                        <a class="action follow-action" onclick="togglePostFollow('follow','<%= post.short_id %>','<%= post.uid %>')"><small class="follow-button"> 订阅 </small></a>
+                        <% } %>
+
                         <small class="split"> | </small>
                         <a class="action" href="#"><small> 举报 </small></a>
                         <% } %>
@@ -264,7 +284,7 @@
 
                       <% if(post.last_edit_at){ %>
                       <small class="split"> | </small>
-                      <small class=" text-secondary"> 最后编辑于：<%= dayjs(post.last_edit_at)   %></small>
+                      <small class=" text-secondary" title="<%= dayjs(post.last_edit_at) %>"> 最后编辑于：<%= unit.time(post.last_edit_at) %>前</small>
                       <% } %>
 
                     </div>
@@ -274,10 +294,14 @@
               </div>
             </div>
           </div>
+          <% } %>
+
+
 
 
           <% for(const comment of locals.comments){ %>
-          <div class="d-flex comments col-12">
+          <div id="comment-<%= comment.short_id.slice(0,6) %>" class="d-flex comments col-12">
+            <span id="<%= comment.short_id.slice(0,6) %>" class="comment-anchor"></span>
             <div class="post-users-wrapper pt-lg-3 pb-lg-3 me-lg-3 flex-auto">
               <div class="text-lg-center d-flex d-lg-block align-items-center p-1 p-lg-0 gap-3">
                 <div>
@@ -290,20 +314,20 @@
                   <% if(comment.user.nickname?.trim()){ %>
                   <div class="d-inline-block d-lg-block"><small><%= comment.user.nickname  %></small></div>
                   <% } %>
-                  <div class="d-inline-block d-lg-block"><small>帖子：1</small></div>
-                  <div class="d-inline-block d-lg-block"><small>粉丝：1</small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= post.user.statistics.posts %></small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= post.user.statistics.fans %></small></div>
                 </div>
               </div>
             </div>
 
-            <div id="<%= comment.short_id.slice(0,6) %>" data-uid="<%= comment.uid %>" class="p-lg-0 p-1 flex-fill d-flex flex-wrap" style=" align-content: space-between">
+            <div data-uid="<%= comment.uid %>" class="p-lg-0 p-1 flex-fill d-flex flex-wrap" style=" align-content: space-between">
               <div class="pt-3 pb-1 h-auto col-12">
                 <!-- 回复内容 -->
                 <% if(comment.parent){ %>
                 <pre><a class=" text-dark text-decoration-none" href="/post/comment-redirect?pid=<%= post.short_id %>&cid=<%= comment.parent.short_id %>">#</a><small class="split"> | </small><small class="leap"><%= dayjs(comment.parent.post_at)  %></small><div class="leap "><%=  (comment.parent?.user?.nickname || comment.parent?.user?.account) + "：" +  (comment.parent?.text?.length > 20 ? comment.parent?.text.slice(0,20) + '...' : comment.parent?.text)  %></div></pre>
                 <% } %>
                 <!-- 评论内容 -->
-                <div class="leap"><%- comment.html %></div>
+                <div class="leap comment-html"><%- comment.html %></div>
               </div>
               <div class="pb-1 col-12">
                 <hr class="mb-2 mt-2 secondary">
@@ -311,24 +335,20 @@
                   <div class="d-flex gap-2">
                     <a class="action" href="/p/<%= post.short_id %>?p=<%= locals.query.p || '1' %>#<%= comment.short_id.slice(0,6) %>"><small> # </small></a>
                     <a class="action" onclick="reply('<%= comment.uid %>','<%= comment.user.account %>','<%= comment.text %>')"><small> 回复 </small></a>
-                    <% if(comment.liked){ %>
-                    <a class="action like-action text-decoration-none" onclick="toggleLike('unlike','<%= comment.short_id %>','<%= comment.uid %>')"><small class="like-button"> 已点赞 </small></a>
-                    <% }else{ %>
-                    <a class="action like-action" onclick="toggleLike('like','<%= comment.short_id %>','<%= comment.uid %>')"><small class="like-button"> 点赞 </small></a>
-                    <% } %>
+
 
                     <small class="split"> | </small>
 
                     <a class="action" href="#"><small> 举报 </small></a>
 
                     <% if(comment.user.uid === locals.user?.uid){ %>
-                    <a class="action" href="/post/remove-comment?cid=<%= comment.uid %>"><small> 删除 </small></a>
+                    <a class="action" onclick="removeComment('<%= comment.short_id %>')"><small> 删除 </small></a>
                     <% } %>
 
 
                     <% if( comment.post_at){ %>
                     <small class="split"> | </small>
-                    <small class=" text-secondary " style="font-size: 13px"> 评论于：<%= dayjs(comment.post_at)   %></small>
+                    <small class=" text-secondary " style="font-size: 13px " title="<%= dayjs(comment.post_at) %>"> 评论于：<%= unit.time(comment.post_at)   %>前</small>
                     <% } %>
 
                   </div>
@@ -339,16 +359,18 @@
           <% } %>
 
 
-          <div class="col-12">
+          <div class="mt-3 col-12">
+            <%- include('/views/components/pagination.ejs',{total_page: locals.total_page, current: locals.query.p || '1' , href_template:  href_template }) %>
+          </div>
 
-            <hr />
+          <div class="col-12 ">
 
-            <div id="reply-info">
+            <div id="reply-info" class="mt-2 mb-2">
               <small class="flex-fill" id="reply-mes"></small>
               <small class="flex-auto"> <a class="action cursor-pointer" onclick="cancelReply()">取消回复 X</a> </small>
             </div>
 
-            <div class="pt-3 pb-3">
+            <div class="pt-2 pb-3">
               <% if(locals.user === undefined){ %>
               <div class="invalid-editor">登录后才能发表评论，<a href="/passport/login" target="_blank">去登录</a></div>
               <% } %>
@@ -363,7 +385,7 @@
 
                 <% if(locals.user ){ %>
                 <div class="text-end">
-                  <button type="button" onclick="JoditUtils.submitComment('form')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button>
+                  <button type="button" onclick="JoditUtils.submitComment('#editor')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button>
                 </div>
                 <% } %>
               </form>
@@ -389,40 +411,65 @@
         invalidEditor.style.height = el('#editor').clientHeight + 'px';
       }
     }
+    window.onload = () => {
+      resize()
+      showHighlight()
 
-    function toggleLike(action, cid, uid) {
-      fetch(`/post/like-comment?uid=${uid}`).then(res => res.text()).then(res => {
-        if (res != 'OK') {
-          return alert('操作失败');
-        }
-        const el = document.querySelector(`#${cid.slice(0,6)} .like-button`)
-        const a = document.querySelector(`#${cid.slice(0,6)} .like-action`)
-        console.log({
-          el,
-          a,
-          action
+      window.onresize = resize;
+    }
+
+    function showHighlight() {
+      const el = document.querySelector(`#comment-${window.location.hash.slice(1)}`)
+      if (el) {
+        el.style.border = '1px solid #0d6efd';
+        el.style.boxShadow = '0 0 10px rgba(0,0,0,0.1)';
+      }
+    }
+
+
+    function removeComment(cid) {
+      if (confirm('确定删除此评论吗？')) {
+        fetch(`/post/remove-comment?cid=${cid}&pid=<%= post.short_id %>`).then(res => {
+          if (res.redirected) {
+            return window.location.href = res.url;
+          }
+          return res.text()
+        }).then(res => {
+          if (res != 'OK') {
+            return;
+          }
+          console.log(res)
         })
-        if (action === 'like') {
-          el.textContent = '已点赞';
-          el.title = '取消点赞';
-          a.setAttribute('onclick', `unlike('${cid}', '${uid}')`);
-          a.classList.toggle('text-secondary');
-          a.classList.toggle('text-decoration-none');
-        } else {
-          el.textContent = '点赞';
-          el.title = '点赞此评论';
-          a.setAttribute('onclick', `like('${cid}', '${uid}')`);
-          a.classList.toggle('text-secondary');
-          a.classList.toggle('text-decoration-none');
+      }
+    }
+
+
+    function togglePostFollow(action, pid, uid) {
+      fetch(`/post/follow?uid=${uid}`).then(res => {
+        if (res.redirected) {
+          return window.location.href = res.url;
         }
+        return res.text()
+      }).then(res => {
+        if (res != 'OK') {
+          return;
+        }
+        const el = document.querySelector(`.post-content .follow-button`)
+        const a = document.querySelector(`.post-content .follow-action`)
+
+        if (action === 'follow') {
+          el.textContent = '已订阅';
+          el.title = '再次点击-取消订阅';
+          a.setAttribute('onclick', `togglePostFollow('not-follow','${pid}', '${uid}')`);
+        } else {
+          el.textContent = '订阅';
+          a.setAttribute('onclick', `togglePostFollow('follow','${pid}', '${uid}')`);
+        }
+        el.classList.toggle('text-secondary');
+        a.classList.toggle('text-decoration-none');
       })
     }
 
-
-    window.onload = () => {
-      resize()
-      window.onresize = resize;
-    }
 
     function cancelReply() {
       el('#reply-info').style.display = 'none';

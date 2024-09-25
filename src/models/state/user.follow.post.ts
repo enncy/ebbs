@@ -1,19 +1,17 @@
 import { defineModel } from "src/core/plugins"
-import { UserDocument } from "../user"
-import { PostDocument } from "../post"
 export class UserFollowPostDocument {
     user_uid: string
     post_uid: string
 
-    public static async isFollowing(user: UserDocument, post: PostDocument): Promise<boolean> {
-        return !!(await UserFollowPostModel.exists({ user_uid: user.uid, post_uid: post.uid }))
+    public static async isFollowing(user_uid: string, post_uid: string): Promise<boolean> {
+        return !!(await UserFollowPostModel.exists({ user_uid, post_uid }))
     }
 
-    public static async toggle(user: UserDocument, post: PostDocument): Promise<void> {
-        if (await UserFollowPostDocument.isFollowing(user, post)) {
-            await UserFollowPostModel.deleteOne({ user_uid: user.uid, post_uid: post.uid })
+    public static async toggle(user_uid: string, post_uid: string): Promise<void> {
+        if (await UserFollowPostDocument.isFollowing(user_uid, post_uid)) {
+            await UserFollowPostModel.deleteOne({ user_uid, post_uid })
         } else {
-            await UserFollowPostModel.create({ user_uid: user.uid, post_uid: post.uid })
+            await UserFollowPostModel.create({ user_uid, post_uid })
         }
     }
 }

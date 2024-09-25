@@ -1,0 +1,143 @@
+<!-- 
+  分页组件
+  - current: 当前页码 
+  - total_page:  总页数
+  - href_template:  页码链接模板
+-->
+
+<% 
+
+const total_page = parseInt(locals.total_page?.toString() || '0'); ;
+let current = parseInt(locals.current?.toString() || '1');
+current = Math.max(Math.min(current, total_page), 1);
+const parts_length = 5;
+let parts = [ ];
+
+if(total_page < 5){
+  for(let i = 0; i < total_page ; i++){
+    parts.push(i + 1);
+  } 
+}else{  
+  let i = 0;
+  while(parts.length < parts_length){
+    if(current - i > 0){
+      parts.unshift(current - i);
+    }
+    if(current + i <= total_page){
+      parts.push(current + i);
+    }
+    parts = Array.from(new Set(parts));
+    i++;
+  } 
+} 
+
+%>
+
+<style>
+  .pagination {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0px;
+    white-space: nowrap;
+  }
+
+  .pagination a {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid #eaeaea;
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #464646;
+    background: white;
+  }
+
+  .pagination a:hover {
+    background-color: #f8f8f8;
+  }
+
+
+  .pagination .active,
+  .pagination .active:hover {
+    background-color: #eeeeee;
+    border: 1px solid #9c9c9c;
+  }
+
+  .goto {  
+    border-radius: 2px;
+  }
+
+  .goto input {
+    width: 64px;
+    height: 26px;
+    padding: 2px 4px; 
+    border: 1px solid #eaeaea; 
+  }
+
+  .goto button {
+    display: inline-block; 
+    cursor: pointer; 
+    background: white;
+    border: 1px solid #eaeaea; 
+  }
+
+
+  .goto button:hover {
+    background-color: #f8f8f8;
+  }
+</style>
+
+<div class=" d-flex pagination col-12">
+  <div class="flex-fill d-flex  align-items-end  gap-1">
+
+    
+    <% if(current > 4) {%>
+    <a href="<%= locals.href_template?.replace('{{page}}',  1) %>">
+      <span>1</span>
+    </a>
+    <span class=" text-secondary">...</span>
+    <% } %>
+
+    <% for(const part of parts) {%>
+    <a class="<%= part === current ? 'active' : '' %>" href="<%= locals.href_template?.replace('{{page}}', part) %>"><%= part %></a>
+    <% } %>
+
+    <% if(current < total_page - 3) {%>
+      <span class=" text-secondary">...</span>
+    <a href="<%= locals.href_template?.replace('{{page}}',  total_page) %>">
+      <span><%= total_page %></span>
+    </a>
+    <% } %>
+
+
+    <% if(total_page > 5){ %>
+    <span class="goto ms-2">
+      <form class="d-inline-block p-0 m-0 goto" onsubmit="return goto()">
+        <input type="number">
+        <button>跳转</button>
+      </form>
+    </span>
+    <% } %>
+  </div>
+
+
+  <% if(total_page !== 0 && current !== total_page){ %>
+  <div class="d-lg-block d-none flex-auto">
+    <a href="<%= locals.href_template?.replace('{{page}}',  current + 1) %>"> 下一页 </a>
+  </div>
+  <% } %>
+</div>
+
+<script>
+  function goto() {
+    const page = document.querySelector('input').value;
+    if (!page) {
+      return false
+    }
+    if (page < 1 || page > parseInt('<%= locals.total_page %>')) {
+      return false;
+    }
+    window.location.href = "<%= locals.href_template || '' %>".replace('{{page}}', page);
+    return false
+  }
+</script>

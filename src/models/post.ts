@@ -55,9 +55,14 @@ export class PostDocument {
         const common_filter = { deleted: false, draft: false, locked: false }
         const posts = await PostModel.find({ category_uid: query.category_uid, ...common_filter })
             .sort({ post_at: -1 })
-            .skip(query.page * query.size)
+            .skip((query.page - 1) * query.size)
             .limit(query.size)
         return posts
+    }
+
+    public static async count(query: { category_uid: string }) {
+        const common_filter = { deleted: false, draft: false, locked: false }
+        return await PostModel.countDocuments({ category_uid: query.category_uid, ...common_filter })
     }
 
     public static async search(value: string) {

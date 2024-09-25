@@ -24,11 +24,11 @@ export class UserDocument {
         fans: number
     }
 
-    public static create(account: string, email: string, passport: string, ip: string) {
+    public static async create(account: string, email: string, passport: string, ip: string) {
         const now = Date.now()
         const salt = uuid()
-        const signed_password = SignUtils.sign({ passport, salt })
-        return UserModel.create({
+        const signed_password = SignUtils.sign({ passport, salt })  
+        return await UserModel.create({
             uid: uuid(),
             account: account,
             nickname: '',
