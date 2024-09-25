@@ -24,7 +24,6 @@ export class PostDocument {
     last_comment_at: number
     statistics: {
         views: number
-        likes: number
         comments: number
         follows: number
     }
@@ -111,7 +110,7 @@ export class PostDocument {
             last_edit_at: 0,
             last_comment_at: 0,
             permissions: [],
-            statistics: { likes: 0, comments: 0, views: 0, follows: 0 }
+            statistics: { comments: 0, views: 0, follows: 0 }
         })
     }
 

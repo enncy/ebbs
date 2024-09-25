@@ -11,8 +11,7 @@ export class CommentDocument {
     html: string
     text: string
     post_at: number
-    statistics: {
-        likes: number
+    statistics: { 
         comments: number
     }
  
@@ -53,7 +52,6 @@ export class CommentDocument {
             text: opts.text,
             post_at: Date.now(),
             statistics: {
-                likes: 0,
                 comments: 0
             }
         })
@@ -71,8 +69,7 @@ export const CommentModel = defineModel<CommentDocument>('Comment',
         html: { type: String, required: true, index: 'text' },
         text: { type: String, required: true, index: 'text' },
         post_at: { type: Number, required: true },
-        statistics: {
-            likes: { type: Number, default: 0 },
+        statistics: { 
             comments: { type: Number, default: 0 }
         }
     },
