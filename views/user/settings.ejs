@@ -4,13 +4,42 @@
 <head>
   <%- include('/views/header') %>
   <title><%=locals.settings.name%></title>
+  <style>
+    .user-settings {
+      max-width: 800px;
+    }
+  </style>
 </head>
 
 <body>
   <%- include('/views/menus') %>
-  <div class=" container p-0">
-    <div class="m-auto user">
-       111
+  <div class="container p-0">
+    <div class="m-auto user-settings">
+      <div class="card">
+        <div class="card-header">
+          个人设置
+        </div>
+        <div class="card-body">
+          <form method="post" action="/user/settings">
+            <div class="mb-3">
+              <label for="email" class="form-label">邮箱</label>
+              <input  type="email" disabled class="form-control" id="email" placeholder="输入你的邮箱..." value="<%= locals.user.email %>">
+            </div>
+            <div class="mb-3">
+              <label for="nickname" class="form-label">昵称</label>
+              <input name="nickname" class="form-control" id="nickname" placeholder="输入你的昵称..." value="<%= locals.user.nickname %>"> 
+            </div>
+            <div class="mb-3">
+              <label for="profile" class="form-label">简介</label>
+              <textarea  name="profile" class="form-control" id="profile" rows="3" placeholder="输入你的简介..." ><%= locals.user.profile %></textarea>
+            </div>
+            
+            <div class="text-end">
+              <button type="submit" class="btn w-25 btn-primary">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 

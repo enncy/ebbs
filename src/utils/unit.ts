@@ -35,7 +35,29 @@ export const unit = {
         }
         return result;
     },
+    /**
+     * 计数单位
+     */
+    count(num: number) {
+        if (num === 0) return '0'
+
+        const mapping = [
+            ['b', Math.pow(10, 6)],
+            ['m', Math.pow(10, 6)],
+            ['k', Math.pow(10, 3)],
+            ['', 1]
+        ] as [string, number][];
+        const index = mapping.map((i) => Math.floor(num / i[1])).findIndex((i) => i > 0);
+        return (num / mapping[index][1]).toFixed(0) + mapping[index][0];
+    },
+    /**
+     * 文件大小单位
+     * @param num 
+     * @returns 
+     */
     fileSize(num: number) {
+        if (num === 0) return '0'
+
         const mapping = [
             ['T', Math.pow(1024, 4)],
             ['G', Math.pow(1024, 3)],

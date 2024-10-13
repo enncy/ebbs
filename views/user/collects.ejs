@@ -1,6 +1,6 @@
 <% 
 
-const href_template = `/user/drafts?p={{page}}`;
+const href_template = `/user/collects?p={{page}}`;
 
 %>
 
@@ -11,7 +11,7 @@ const href_template = `/user/drafts?p={{page}}`;
   <%- include('/views/header') %>
   <title><%=locals.settings.name%></title>
   <style>
-    .drafts {
+    .collects {
       max-width: 800px;
     }
   </style>
@@ -20,20 +20,20 @@ const href_template = `/user/drafts?p={{page}}`;
 <body>
   <%- include('/views/menus') %>
   <div class=" container  ">
-    <div class="m-auto drafts">
+    <div class="m-auto collects">
       <div class="card">
         <div class="card-header">
-          我的草稿
+          我的收藏
         </div>
         <div class="card-body">
-          <% if(!locals.drafts || locals.drafts.length === 0){ %>
+          <% if(!locals.collects || locals.collects.length === 0){ %>
           <div class="empty">暂无数据</div>
           <% }else{ %>
           <div>
             <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
 
             <div>
-              <%- include('/views/components/post.list.ejs', {posts: locals.drafts }) %>
+              <%- include('/views/components/post.list.ejs', {posts: locals.collects }) %>
             </div>
 
             <div class="mt-2">

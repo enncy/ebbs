@@ -24,6 +24,11 @@ export const global_config = {
             resolve('public/segment/ignore_dict.txt')
         ],
     },
+    user: {
+        pagination: {
+            size: 10
+        }
+    },
     category: {
         max_page: 99,
         pagination: {

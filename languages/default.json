@@ -113,6 +113,8 @@
     "post.form.tags_has_sensitive_words": "标签包含敏感词：{{words}}",
     "post.form.title_has_sensitive_words": "标题包含敏感词：{{words}}",
     "post.form.content_has_sensitive_words": "内容包含敏感词：{{words}}",
+    "post.form.content_too_short": "内容太短，至少{{min}}个字",
+    "post.form.content_too_long": "内容太长，最多{{max}}个字",
     "post.error.category_not_exist": "论坛分区不存在",
     "post.error.post_not_exist": "帖子不存在"
 }

@@ -1,16 +1,12 @@
-import { ErrorRequestHandler, RequestHandler } from "express";
+import { RequestHandler } from "express";
 import EJS from 'ejs';
 import { resolve } from "path";
-import { bindEJSBaseVariables } from "src/defaults-plugins/ejs";
-import { logger } from "src/app"; 
+import { ViewRenderEvent } from "src/events/page";
+import { PluginContext } from "src/core/plugins";
 
 
-export function errorPages(): ErrorRequestHandler {
-    return async (err, req, res, next) => { 
-        if (err) {
-            logger.error(err.message)
-            logger.error(err.stack)
-        }
+export function errorPages(context: PluginContext): RequestHandler {
+    return async (req, res, next) => {
         if (res.headersSent) {
             return
         }
@@ -20,14 +16,12 @@ export function errorPages(): ErrorRequestHandler {
         if (req.path === '/error') {
             res.statusCode = parseInt(req.query.code as string) || 404
         }
-        else if (err) {
-            res.statusCode = 500
-        }
         else if (res.statusCode === 200) {
             res.statusCode = 404
         }
         const data = {}
-        bindEJSBaseVariables(req, data)
+        const e = new ViewRenderEvent(req, req.path, data)
+        await context.emit(null, e)
         const render = (code: number) => EJS.renderFile(resolve('views', code + '.ejs'), data, { root: process.cwd() })
         res.send(await render(res.statusCode))
     }

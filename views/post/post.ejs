@@ -124,6 +124,30 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
     top: -64px;
   }
 
+
+  .statistic {
+    padding: 2px 6px;
+    border: 1px solid #eaeaea;
+    border-radius: 4px;
+  }
+
+
+  .statistic+.statistic {
+    margin-left: 6px;
+  }
+
+  .tag{
+    padding: 2px 4px;
+    border: 1px solid #eaeaea;
+    border-radius: 4px;
+  }
+
+  .tag-list { 
+    font-size: 12px;
+  }
+
+
+
   @media screen and (max-width: 742px) {
 
     .post-wrapper {
@@ -180,7 +204,10 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
 <head>
   <%- include('/views/header') %>
-  <title><%=locals.settings.name%></title>
+  <title><%=locals.settings.name%> - <%= locals.post.title %></title>
+  <meta name="description" content="<%= ellipsis(locals.post.text,200) %>">
+  <meta name="keywords" content="<%= locals.post.text_keywords.join(',') %>">
+
 </head>
 
 <body>
@@ -236,25 +263,41 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                   <% if(post.user.nickname?.trim()){ %>
                   <div class="d-inline-block d-lg-block"><small><%= post.user.nickname  %></small></div>
                   <% } %>
-                  <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= post.user.statistics.posts %></small></div>
-                  <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= post.user.statistics.fans %></small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= unit.count(post.user.statistics.posts) %></small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= unit.count(post.user.statistics.fans)  %></small></div>
                 </div>
               </div>
             </div>
 
+
+            <!-- 帖子主体 -->
             <div class="p-lg-0 p-1 flex-fill">
-              <div class="title"><b><%= post.title %></b></div>
+              <div class="title"><b> <span class="badge bg-secondary"><%= post.draft ? '草稿' :'' %></span> <%= post.title %></b></div>
               <div class="d-flex flex-wrap align-items-center text-secondary mt-2">
                 <div class="flex-fill">
                   <small>发布于：<%= dayjs(post.post_at)  %></small>
                 </div>
                 <div class="flex-auto">
-                  <small>查看：<%= post.statistics.views %></small>
-                  <span class="split">|</span>
-                  <small>回帖：<%= post.statistics.comments %></small>
+                  <small class="statistic">查看：<span class="fw-bold"><%= unit.count(post.statistics.views) %></span></small>
+                  <small class="statistic">回帖：<span class="fw-bold"><%= unit.count(post.statistics.comments) %></span></small>
                 </div>
               </div>
-              <hr style="margin-top: 6px; " />
+
+              <div class="mt-1">
+                <% if(post.tags?.length){ %>
+                <div class="tag-list text-secondary"> 
+                  <% for(const tag of post.tags){ %>
+                  <span class="tag  me-1">#<%= tag %></span>
+                  <% } %>
+                </div>
+                <% } %>
+              </div>
+
+              <hr class="mt-2 mb-2" /> 
+
+              <%- include('./post.actions.ejs') %>
+              <hr class="mb-2 mt-2 secondary">
+
               <div class="post-content pt-1 pb-1">
                 <div class="d-flex flex-wrap" style=" align-content: space-between">
                   <div class="h-auto col-12">
@@ -263,31 +306,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                   <!-- 操作区域 -->
                   <div class="pb-1 col-12">
                     <hr class="mb-2 mt-2 secondary">
-                    <div class="d-flex gap-2 actions">
-                      <div class="d-flex gap-2">
-                        <% if(post.user.uid === locals.user?.uid){ %>
-                        <a class="action" href="/post/editor?category_uid=<%= post.category_uid %>&pid=<%= post.short_id %>"><small> 编辑 </small></a>
-                        <% }else{ %>
-
-
-                        <% if(post.followed){ %>
-                        <a class="action follow-action text-decoration-none " onclick="togglePostFollow('not-follow','<%= post.short_id %>','<%= post.uid %>')"><small class="follow-button text-secondary"> 已订阅 </small></a>
-                        <% }else{ %>
-                        <a class="action follow-action" onclick="togglePostFollow('follow','<%= post.short_id %>','<%= post.uid %>')"><small class="follow-button"> 订阅 </small></a>
-                        <% } %>
-
-                        <small class="split"> | </small>
-                        <a class="action" href="#"><small> 举报 </small></a>
-                        <% } %>
-                      </div>
-
-
-                      <% if(post.last_edit_at){ %>
-                      <small class="split"> | </small>
-                      <small class=" text-secondary" title="<%= dayjs(post.last_edit_at) %>"> 最后编辑于：<%= unit.time(post.last_edit_at) %>前</small>
-                      <% } %>
-
-                    </div>
+                    <%- include('./post.actions.ejs') %>
                   </div>
 
                 </div>
@@ -298,7 +317,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
 
 
-
+          <!-- 评论区域 -->
           <% for(const comment of locals.comments){ %>
           <div id="comment-<%= comment.short_id.slice(0,6) %>" class="d-flex comments col-12">
             <span id="<%= comment.short_id.slice(0,6) %>" class="comment-anchor"></span>
@@ -314,8 +333,8 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                   <% if(comment.user.nickname?.trim()){ %>
                   <div class="d-inline-block d-lg-block"><small><%= comment.user.nickname  %></small></div>
                   <% } %>
-                  <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= post.user.statistics.posts %></small></div>
-                  <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= post.user.statistics.fans %></small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= unit.count(post.user.statistics.posts) %></small></div>
+                  <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= unit.count(post.user.statistics.fans) %></small></div>
                 </div>
               </div>
             </div>
@@ -324,7 +343,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
               <div class="pt-3 pb-1 h-auto col-12">
                 <!-- 回复内容 -->
                 <% if(comment.parent){ %>
-                <pre><a class=" text-dark text-decoration-none" href="/post/comment-redirect?pid=<%= post.short_id %>&cid=<%= comment.parent.short_id %>">#</a><small class="split"> | </small><small class="leap"><%= dayjs(comment.parent.post_at)  %></small><div class="leap "><%=  (comment.parent?.user?.nickname || comment.parent?.user?.account) + "：" +  (comment.parent?.text?.length > 20 ? comment.parent?.text.slice(0,20) + '...' : comment.parent?.text)  %></div></pre>
+                <pre><a class=" text-dark text-decoration-none" href="/post/comment-redirect?cid=<%= comment.parent.short_id %>">#</a><small class="split"> | </small><small class="leap"><%= dayjs(comment.parent.post_at)  %></small><div class="leap "><%=  (comment.parent?.user?.nickname || comment.parent?.user?.account) + "：" +  (comment.parent?.text?.length > 20 ? comment.parent?.text.slice(0,20) + '...' : comment.parent?.text)  %></div></pre>
                 <% } %>
                 <!-- 评论内容 -->
                 <div class="leap comment-html"><%- comment.html %></div>
@@ -444,8 +463,8 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
     }
 
 
-    function togglePostFollow(action, pid, uid) {
-      fetch(`/post/follow?uid=${uid}`).then(res => {
+    function togglePostCollect(action, pid, uid) {
+      fetch(`/post/collect?uid=${uid}`).then(res => {
         if (res.redirected) {
           return window.location.href = res.url;
         }
@@ -454,16 +473,16 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
         if (res != 'OK') {
           return;
         }
-        const el = document.querySelector(`.post-content .follow-button`)
-        const a = document.querySelector(`.post-content .follow-action`)
+        const el = document.querySelector(`.post-content .collect-button`)
+        const a = document.querySelector(`.post-content .collect-action`)
 
-        if (action === 'follow') {
-          el.textContent = '已订阅';
-          el.title = '再次点击-取消订阅';
-          a.setAttribute('onclick', `togglePostFollow('not-follow','${pid}', '${uid}')`);
+        if (action === 'collect') {
+          el.textContent = '已收藏';
+          el.title = '再次点击-取消收藏';
+          a.setAttribute('onclick', `togglePostCollect('not-collect','${pid}', '${uid}')`);
         } else {
-          el.textContent = '订阅';
-          a.setAttribute('onclick', `togglePostFollow('follow','${pid}', '${uid}')`);
+          el.textContent = '收藏';
+          a.setAttribute('onclick', `togglePostCollect('collect','${pid}', '${uid}')`);
         }
         el.classList.toggle('text-secondary');
         a.classList.toggle('text-decoration-none');

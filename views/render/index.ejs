@@ -26,7 +26,7 @@
   }
 
   .category .statistics {
-    flex: 0 auto; 
+    flex: 0 auto;
     font-size: 14px;
   }
 
@@ -47,6 +47,14 @@
 
   .side {
     max-width: 400px;
+  }
+
+  .post-list-item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    padding: 2px 0px !important;
   }
 
 
@@ -75,7 +83,7 @@
           <div class="categorys">
             <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
             <% const category_group = locals.category_groups[i]; %>
- 
+
             <div class="card">
               <h5 class="card-header"><%= category_group.name %></h5>
               <div class="card-body">
@@ -110,16 +118,39 @@
         <div class="side col-lg-4 col-12 mt-3 mt-lg-0">
 
           <div class="card mb-3">
-            <h5 class="card-header fs-6">热门帖子</h5>
+            <h5 class="card-header fs-6">新发帖子</h5>
             <div class="card-body">
-              <p class="card-text">暂无数据</p> 
+              <% if(locals.newest_posts.length === 0){ %>
+              <p class="card-text">暂无数据</p>
+              <% }else{ %>
+              <ul class="list-group list-group-flush">
+                <% for(const post of locals.newest_posts ){ %>
+                <li class="list-group list-group-item post-list-item ">
+                  <a class=" text-dark" href="/u/<%= post.user.account  %>"><%= post.user.nickname || post.user.account %></a>
+                  :
+                  <a href="/p/<%= post.short_id %>" class="text-dark text-decoration-none"><%= post.title %></a></li>
+                <% } %>
+              </ul>
+              <% } %>
             </div>
           </div>
 
           <div class="card">
-            <h5 class="card-header fs-6">精华帖子</h5>
+            <h5 class="card-header fs-6">新发评论</h5>
             <div class="card-body">
-              <p class="card-text"> 暂无数据 </p> 
+              <% if(locals.newest_comments.length === 0){ %>
+              <p class="card-text">暂无数据</p>
+              <% }else{ %>
+              <ul class="list-group list-group-flush">
+                <% for(const comment of locals.newest_comments ){ %>
+                <li class="list-group list-group-item post-list-item ">
+                  <a class=" text-dark" href="/u/<%= comment.user.account  %>"><%= comment.user.nickname || comment.user.account %></a>
+                  :
+                  <a href="/post/comment-redirect?cid<%= comment.short_id %>" class="text-dark text-decoration-none"><%= comment.text %></a>
+                </li>
+                <% } %>
+              </ul>
+              <% } %>
             </div>
           </div>
         </div>

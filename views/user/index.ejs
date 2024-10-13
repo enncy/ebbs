@@ -1,86 +1,188 @@
- <!DOCTYPE html>
- <html lang="en">
+<% 
 
- <head>
-   <%- include('/views/header') %>
-   <title><%=locals.settings.name%></title>
-   <style>
-     .user {
-       max-width: 800px;
-     }
+const href_template = `/u/${locals.user.account}?show=${ locals.query.show || 'index' }&p={{page}}`;
 
-     .user .info {
-       font-size: 13px;
-     }
+%>
 
-     .statistics {
-       display: flex;
-       gap: 24px;
-     }
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%></title>
+  <style>
+    .user {
+      max-width: 800px;
+    }
+
+    .user .info , .profile{
+      font-size: 13px;
+    }
+
+    .statistics {
+      display: flex;
+      gap: 24px;
+    }
+
+    .statistics a {
+      color: #666;
+      text-decoration: none;
+
+    }
+
+    .statistic {
+      border: 1px solid #eaeaea;
+      border-radius: 4px;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+
+    .statistic:hover {
+      background-color: #f8f8f8;
+    }
 
 
-     .statistic {
-       border: 1px solid #eaeaea;
-       border-radius: 4px;
-       padding: 4px 12px;
-       cursor: pointer;
-     }
+    .empty {
+      text-align: center;
+      padding: 12px;
+      border: 1px solid #e7e7e7;
+      border-radius: 4px;
+      margin: 12px;
+    }
+  </style>
+</head>
 
-     .statistic:hover {
-       background-color: #f8f8f8;
-     }
-   </style>
- </head>
+<body>
+  <%- include('/views/menus') %>
+  <div class=" container p-0">
+    <div class="m-auto user">
+      <div class="card p-3">
+        <div class=" text-center">
+          <div class=" ">
+            <img src="<%= locals.user.avatar || '/assets/default_avatar.png' %>" alt="<%= locals.user.account %>" width="64" height="64">
+          </div>
+          <div class=" ">
+            <h2><%= account.account %></h2> 
+          </div>
+        </div>
+        <hr>
+        <div class="profile">
+          <div>昵称：<%= account.nickname  || '暂无' %></div> 
+          <div>简介：<%= account.profile  || '暂无' %></div> 
+        </div>
+        <hr>
+        <div class="info">  
+          <div>
+            主页链接：<a id="user-link" href="/u/<%= account.account %>"> </a>
+          </div>
+          <div>
+            注册时间： <%= account.register_at ? dayjs(account.register_at) : '无' %>
+          </div>
+          <div>
+            注册地址： <%= account.register_ip ? ip2region(account.register_ip) : '无' %>
+          </div>
+          <div>
+            近期登录： <%= account.last_login_at ? dayjs(account.last_login_at) : '无' %>
+          </div>
+          <div>
+            近期登录地址： <%= account.last_login_ip ? ip2region(account.last_login_ip) : '无' %>
+          </div>
+        </div>
+        <hr>
+        <div class="statistics text-secondary">
+          <a href="/u/<%= account.account %>?show=posts">
+            <div class="statistic">帖子 : <%= unit.count(account.statistics.posts ?? 0) %></div>
+          </a>
+          <a href="/u/<%= account.account %>?show=follows">
+            <div class="statistic">关注 : <%=  unit.count(account.statistics.follows ?? 0) %></div>
+          </a>
+          <a href="/u/<%= account.account %>?show=fans">
+            <div class="statistic">粉丝 : <%=  unit.count(account.statistics.fans ?? 0) %></div>
+          </a>
+        </div>
 
- <body>
-   <%- include('/views/menus') %>
-   <div class=" container p-0">
-     <div class="m-auto user">
-       <div class="card p-3">
-         <div class="d-flex align-items-center">
-           <div class="flex-auto">
-             <img src="<%= locals.user.avatar || '/assets/default_avatar.png' %>" alt="<%= locals.user.account %>" width="64" height="64">
-           </div>
-           <div class="felx-fill ms-lg-2">
-             <h2><%= account.account %></h2>
-             <div class="leap"><%= account.profile %>1111</div>
-           </div>
-         </div>
-         <hr>
-         <div class="info">
-           <div>
-             主页链接：<a id="user-link" href="/u/<%= account.account %>"> </a>
-           </div>
-           <div>
-             注册时间： <%= account.register_at ? dayjs(account.register_at) : '无' %>
-           </div>
-           <div>
-             注册地址： <%= account.register_ip ? ip2region(account.register_ip) : '无' %>
-           </div>
-           <div>
-             近期登录： <%= account.last_login_at ? dayjs(account.last_login_at) : '无' %>
-           </div>
-           <div>
-             近期登录地址： <%= account.last_login_ip ? ip2region(account.last_login_ip) : '无' %>
-           </div>
-         </div>
-         <hr>
-         <div class="statistics text-secondary">
-           <div class="statistic">帖子 : <%= account.statistics.posts ?? 0 %></div>
-           <div class="statistic">回帖 : <%= account.statistics.comments ?? 0 %></div>
-           <div class="statistic">关注 : <%= account.statistics.follows ?? 0 %></div>
-           <div class="statistic">粉丝 : <%= account.statistics.fans ?? 0 %></div>
-         </div>
-       </div>
-     </div>
-   </div>
 
-   <script>
-     const user_link = document.getElementById('user-link')
-     user_link.href = location.origin + '/u/' + '<%= account.account %>';
-     user_link.innerText = location.origin + '/u/' + '<%= account.account %>';
-   </script>
+        <div>
+          <% if(locals.query.show === 'posts'){ %>
+          <% if(!locals.posts || locals.posts.length === 0){ %>
+          <div class="empty">暂无数据</div>
+          <% }else{ %>
+          <div>
+            <div class="mt-2">
+              <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+            </div>
 
- </body>
+            <div>
+              <%- include('/views/components/post.list.ejs', {posts: locals.posts }) %>
+            </div>
 
- </html>
+            <div class="mt-2">
+              <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+            </div>
+          </div>
+          <% } %>
+          <% } %>
+        </div>
+
+        
+        <div>
+          <% if(locals.query.show === 'follows'){ %>
+          <% if(!locals.follows || locals.follows.length === 0){ %>
+          <div class="empty">暂无数据</div>
+          <% }else{ %>
+          <div>
+            <div class="mt-2">
+              <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+            </div>
+
+            <div>
+              <%= follows.length %>
+            </div>
+
+            <div class="mt-2">
+              <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+            </div>
+          </div>
+          <% } %>
+          <% } %>
+        </div>
+
+
+        <div>
+          <% if(locals.query.show === 'fans'){ %>
+          <% if(!locals.fans || locals.fans.length === 0){ %>
+          <div class="empty">暂无数据</div>
+          <% }else{ %>
+          <div>
+            <div class="mt-2">
+              <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+            </div>
+
+            <div>
+              <%= fans.length %>
+            </div>
+
+            <div class="mt-2">
+              <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+            </div>
+          </div>
+          <% } %>
+          <% } %>
+        </div>
+
+        
+
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const user_link = document.getElementById('user-link')
+    user_link.href = location.origin + '/u/' + '<%= account.account %>';
+    user_link.innerText = location.origin + '/u/' + '<%= account.account %>';
+  </script>
+
+</body>
+
+</html>

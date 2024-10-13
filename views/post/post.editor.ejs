@@ -3,6 +3,17 @@
 
 <head>
   <%- include('/views/header') %>
+  <style>
+    .tag {
+      padding: 2px 4px;
+      border: 1px solid #eaeaea;
+      border-radius: 4px;
+    }
+
+    .tag-list {
+      font-size: 12px;
+    }
+  </style>
 </head>
 
 <body>
@@ -33,25 +44,58 @@
         </div>
         <div class="d-flex align-items-center">
           <div class="flex-fill">
-
             <!-- 标签编辑弹窗 -->
             <%- include('/views/components/dialog.start.ejs', { id:'tagModal', title: i18ns('_dict_.add','_model_.post.tag')  })  %>
             <small class=" text-secondary"><%= i18n('post.form.tag_note.use_space_or_comma_to_split') %></small>
-            <input type="text" name="tags" class="form-control mt-2 mb-2" value="<%= locals.body?.tags || defaults.tags %>">
+            <input type="text" name="tags" class="form-control mt-2 mb-2" value="<%=  (locals.body?.tags?.split(/[,， ]/) || defaults.tags ).join(' ') %>">
             <%- include('/views/components/dialog.end.ejs')  %>
             <a href="#" data-bs-toggle="modal" data-bs-target="#tagModal" class="extra-functions"><%= i18ns('_dict_.add','_model_.post.tag') %>+</a>
 
             <!-- 是否加入草稿 -->
             <div class="extra-functions ">
-              <%= i18n('_model_.post.draft') %> <input type="checkbox" name="draft" class="form-check-input" id="draft" <%= locals.body?.draft ? 'checked': '' %>>
+              <%= i18n('_model_.post.draft') %> <input type="checkbox" name="draft" class="form-check-input" id="draft" <%= (locals.body?.draft || defaults.draft) ? 'checked': '' %>>
             </div>
           </div>
           <div class="flex-auto"> <button type="button" onclick="JoditUtils.submitPost('form')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button></div>
+        </div>
+
+
+        <div class="tag-list text-secondary">
         </div>
       </form>
 
     </div>
   </div>
+
+
+  <script>
+    const tags_regexp = /[,， ]/;
+    const original_tags = decodeURI(`<%= encodeURI((locals.body?.tags?.split(/[,， ]/) || defaults.tags )) %>`).split(tags_regexp)
+    console.log({
+      original_tags
+    })
+    renderTags(original_tags);
+    window.onload = () => {
+      const tags = document.querySelector('input[name="tags"]');
+      tags.onblur = () => {
+        renderTags(tags.value.split(tags_regexp));
+      }
+    }
+
+
+    function renderTags(tags) {
+      const list = document.querySelector('.tag-list');
+      list.innerHTML = '';
+      tags.forEach(tag => {
+        if (tag) {
+          const item = document.createElement('span');
+          item.className = 'tag me-1';
+          item.innerText = '#' + tag;
+          list.appendChild(item);
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>

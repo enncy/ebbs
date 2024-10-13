@@ -13,9 +13,8 @@ export default (pages: Page[]): RequestHandler => {
             next()
             return
         }
-
         const html = await page.render(req, res)
-        if(res.headersSent) {
+        if (res.headersSent) {
             return
         }
         if (!html) {

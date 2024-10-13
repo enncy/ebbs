@@ -9,8 +9,7 @@
 <header class="p-lg-2 p-1 mb-3 border-bottom bg-white">
   <div class="container-lg">
     <div class="d-flex flex-nowrap align-items-center justify-content-center justify-content-lg-start">
-
-
+ 
       <ul class="flex-fill nav col-12 col-lg-auto me-lg-auto  mb-md-0">
         <li><a href="/" class="nav-link px-2 link-secondary"><%=locals.settings.name%></a></li>
         <% if (locals.user?.permissions?.includes('admin')) { %>
@@ -26,9 +25,13 @@
         </a>
         <ul class="dropdown-menu text-small">
           <li><a class="dropdown-item" href="/u/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
-          <li><a class="dropdown-item" href="/user/setting/<%= locals.user.account %>"><%= i18n('_dict_.personal_setting') %></a></li>
-          <li><a class="dropdown-item" href="/user/notify/<%= locals.user.account %>"><%= i18n('_dict_.notify') %></a></li>
-          <li><a class="dropdown-item" href="/user/drafts/<%= locals.user.account %>"><%= i18n('_dict_.draft') %></a></li>
+          <li><a class="dropdown-item" href="/user/settings"><%= i18n('_dict_.personal_setting') %></a></li> 
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li><a class="dropdown-item" href="/user/notifies">通知</a></li>
+          <li><a class="dropdown-item" href="/user/collects">收藏</a></li>
+          <li><a class="dropdown-item" href="/user/drafts"><%= i18n('_dict_.draft') %></a></li>
           <li>
             <hr class="dropdown-divider">
           </li>

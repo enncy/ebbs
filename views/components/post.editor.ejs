@@ -36,7 +36,7 @@
   }
 </style>
 
-<div>
+<div class="jodit-editor">
   <input name="deleted_images" type="hidden">
   <textarea id="html" name="html" style="display:none;"><%- locals.body?.html || '' %></textarea>
   <textarea id="text" name="text" style="display:none;"><%- locals.body?.text || '' %></textarea>
@@ -54,8 +54,8 @@
   const video_supports = JSON.parse(decodeURI('<%=  encodeURI(JSON.stringify(locals.video_supports))  %>'))
 
   const tags_max_length = parseInt(`<%= locals.tags_max_length || 5 %>`)
-  const content_min_length = parseInt(`<%= locals.content_min_length || 10 %>`)
-  const content_max_length = parseInt(`<%= locals.content_max_length || 10000 %>`)
+  const content_min_length = parseInt(`<%= locals.content_min_length ?? 10 %>`)
+  const content_max_length = parseInt(`<%= locals.content_max_length ?? 10000 %>`)
 
   console.log('config', {
     emojis,
@@ -73,6 +73,13 @@
       const image_urls = Array.from(images).map(image => image.src)
       // 判断文本
       const form_data = new FormData(form_el)
+      if (form_data.get('text').toString().length < content_min_length) {
+        return jodit.message.message(`<%= i18n('post.form.content_too_short', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
+      }
+      if (form_data.get('text').toString().length > content_max_length) {
+        return jodit.message.message(`<%= i18n('post.form.content_too_long', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
+
+      }
 
       // 判断标签
       const tags = form_data.get('tags').toString().split(' ').filter(tag => tag.trim())
@@ -89,6 +96,16 @@
       const form_el = document.querySelector(form_selector)
       const images = jodit.editor.querySelectorAll('img')
       const image_urls = Array.from(images).map(image => image.src)
+
+      // 判断文本
+      const form_data = new FormData(form_el)
+      if (form_data.get('text').toString().length < content_min_length) {
+        return jodit.message.message(`<%= i18n('post.form.content_too_short', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
+      }
+      if (form_data.get('text').toString().length > content_max_length) {
+        return jodit.message.message(`<%= i18n('post.form.content_too_long', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
+
+      }
 
       // 找出已删除的图片
       const deleted_images = inserted_images.filter(image => !image_urls.some(u => u.includes(encodeURI(image))))
@@ -131,9 +148,9 @@
   ]
 
 
-  const height = parseInt('<%= locals.height ?? 600 %>')
-  const language = '<%= locals.language ?? "zh_cn" %>'.trim()
-  const simple = '<%= locals.simple ?? false %>'.trim() === 'true'
+  const height = parseInt('<%= locals.height ?? locals.settings?.editor?.height ?? 1000 %>')
+  const language = '<%= locals.language ?? locals.settings?.editor?.language ?? "zh_cn" %>'.trim()
+  const simple = '<%= locals.simple ?? locals.settings?.editor?.simple ?? false %>'.trim() === 'true'
   const placeholder = '<%= locals.placeholder ?? i18ns("_dict_.input","_model_.post.content") %>'.trim()
 
   const jodit = Jodit.make('#jodit-editor', {
@@ -199,12 +216,9 @@
               replacements[`path[${index}]`] = part
             })
 
-            console.log(replacements)
-
             const video_iframe = String(support.iframe_template).trim().replace(/\{\{(.*?)\}\}/g, (_, key) => {
               return replacements[key] || ''
             })
-            console.log(video_iframe)
 
             jodit.s.restore();
             jodit.s.insertHTML(video_iframe)
@@ -280,10 +294,10 @@
     }
   });
 
-  jodit.value = document.getElementById('html').value;
+  jodit.value = document.querySelector('.jodit-editor #html').value;
 
   jodit.events.on('change', function() {
-    document.getElementById('html').value = jodit.value;
+    document.querySelector('.jodit-editor #html').value = jodit.value;
     const container = jodit.editor.cloneNode(true)
     try {
       container.querySelectorAll('img').forEach(image => {
@@ -292,7 +306,7 @@
       container.querySelectorAll('iframe').forEach(image => {
         image.replaceWith('[视频]')
       })
-      document.getElementById('text').value = container.innerText
+      document.querySelector('.jodit-editor #text').value = container.innerText
     } catch (e) {
       console.error(e)
     }

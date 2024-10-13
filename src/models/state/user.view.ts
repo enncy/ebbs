@@ -5,9 +5,10 @@ export class UserViewDocument {
 
     public static async view(user_uid: string, post_uid: string) {
         if (await UserViewModel.exists({ user_uid, post_uid })) {
-            return
+            return false
         }
         await UserViewModel.create({ user_uid, post_uid })
+        return true
     }
 }
 export const UserViewModel = defineModel<UserViewDocument>('UserView',

@@ -1,6 +1,16 @@
 import { defineModel } from "src/core/plugins"
 import { randomShortId, uuid } from "./utils"
 
+
+export interface CommentCreateParams {
+    user_uid: string,
+    category_uid: string,
+    post_uid: string,
+    html: string,
+    text: string,
+    parent_uid?: string
+}
+
 export class CommentDocument {
     uid: string
     short_id: string
@@ -11,7 +21,7 @@ export class CommentDocument {
     html: string
     text: string
     post_at: number
-    statistics: { 
+    statistics: {
         comments: number
     }
 
@@ -39,8 +49,8 @@ export class CommentDocument {
     }
 
 
-    public static async create(opts: { user_uid: string, category_uid: string, post_uid: string, html: string, text: string, parent_uid?: string }) {
-        const short_id = await randomShortId(async (id) => !await CommentModel.findOne({ short_id: id })) 
+    public static async create(opts: CommentCreateParams) {
+        const short_id = await randomShortId(async (id) => !await CommentModel.findOne({ short_id: id }))
         return await CommentModel.create({
             uid: uuid(),
             short_id: short_id,
@@ -51,10 +61,10 @@ export class CommentDocument {
             html: opts.html,
             text: opts.text,
             post_at: Date.now(),
-            statistics: { 
+            statistics: {
                 comments: 0
             }
-        } )
+        })
     }
 
 }
@@ -69,7 +79,7 @@ export const CommentModel = defineModel<CommentDocument>('Comment',
         html: { type: String, required: true, index: 'text' },
         text: { type: String, required: true, index: 'text' },
         post_at: { type: Number, required: true },
-        statistics: { 
+        statistics: {
             comments: { type: Number, default: 0 }
         }
     },

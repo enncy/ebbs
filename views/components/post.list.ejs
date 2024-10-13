@@ -1,0 +1,67 @@
+<style>
+  .post {
+    padding: 6px 0px;
+    display: flex;
+    border-bottom: 1px solid #eaeaea;
+  }
+
+  .post .statistics {
+    padding: 0px 6px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .post .title a {
+    font-size: 15px;
+    font-weight: bold;
+    color: #3a3a3a !important;
+  }
+
+  .post .description {
+    font-size: 13px;
+    min-width: 300px;
+    color: #666;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .title a:hover {
+    text-decoration: underline !important;
+  }
+
+  .post:hover {
+    background-color: #f9f9f9;
+  }
+</style>
+
+<% if (locals.posts?.length) { %>
+<div class="posts">
+  <% for (let i = 0 ;i < locals.posts.length; i++) {  %>
+  <% const item = locals.posts[i]; %>
+  <div class="mb-1">
+    <div class="post">
+      <div class="info flex-fill">
+        <div class="title"><a class=" text-decoration-none d-inline-block w-100" href="/p/<%= item.short_id %>"><%= item.title %></a></div>
+        <div class="description">
+          <% if(item.user){ %>
+          <a class=" text-dark" href="/u/<%= item.user.account  %>"><%= item.user.nickname || item.user.account %></a>
+          <% }else{ %>
+          <a class=" text-dark">未知</a>
+          <% } %>
+          <span>：<%= ellipsis(item.text.trim(), 50)  %></span>
+        </div>
+      </div>
+      <div class="statistics text-secondary flex-auto">
+        <div><small>查看 : <%= unit.count(item.statistics.views)  %></small></div>
+        <div><small>回帖 : <%= unit.count(item.statistics.comments)   %></small></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>
+<% } else { %>
+<div>
+  <%= i18n('_dict_.no_data') %>
+</div>
+<% } %>

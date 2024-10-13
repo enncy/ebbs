@@ -81,25 +81,26 @@ export class ContentUtils {
     }
 
     /**
-     * 分词
+     * 关键字
      * @param str 字符串
      * @param max_num 分词数量 
      */
-    public static cutForSearch(str: string, max_num: number = 99) {
-        let keys = jieba.cutForSearch(str, true);
+    public static extract(str: string, max_num: number = 99) {
+        let keys = jieba.extract(str, max_num);
         if (keys.length === 0) {
             let worlds = jieba
-                .cutForSearch(str, true)
+                .extract(str, max_num)
+                .map((w) => w.keyword)
                 .filter((w) => /[\u4e00-\u9fa5a-zA-Z0-9]/.test(w) === true)
-                .filter((w) => w.length > 1);
+                .filter((w) => w.length > 1)
             return worlds.length === 0 ? [str] : worlds;
         }
 
         // 排除空词
-        keys = keys.filter((k) => k.trim());
+        keys = keys.filter((k) => k.keyword.trim());
         // 排除忽略词
-        keys = keys.filter((k) => !ContentUtils.segment_ignore_words.has(k));
+        keys = keys.filter((k) => !ContentUtils.segment_ignore_words.has(k.keyword));
 
-        return keys.slice(0, max_num);
+        return keys.slice(0, max_num).map((k) => k.keyword);
     }
 }

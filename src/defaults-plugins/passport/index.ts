@@ -192,7 +192,7 @@ export const PassportPlugin = definePlugin({
         const e = await plugin.emit(new UserEmailLoginSuccessEvent(email, ip))
         if (e.notCancelled()) {
             plugin.sessions.set(req, 'user', user)
-            return res.send(await loginView.render(req, { success: i18n('passport.login.email_login_success'), redirect: { url: '/', timeout: 2 } }))
+            return res.send(await loginView.render(req, { success: i18n('passport.login.email_login_success'), redirect: { url: '/', timeout: 1 } }))
         }
     })
 

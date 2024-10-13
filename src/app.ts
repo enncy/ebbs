@@ -80,7 +80,7 @@ dotenv.config();
         // 渲染插件定义的页面
         .use(PluginRender(context.getAllPages()))
         // 错误页面
-        .use(errorPages())
+        .use(errorPages(context))
 
 
     // 启动服务器

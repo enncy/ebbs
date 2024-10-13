@@ -23,6 +23,12 @@ export function bindEJSBaseVariables(req: Request, data: any) {
     Reflect.set(data, 'html', html)
     Reflect.set(data, 'i18n', i18n)
     Reflect.set(data, 'i18ns', i18ns)
+    Reflect.set(data, 'ellipsis', (text: string, length: number) => {
+        if (text.length > length) {
+            return text.slice(0, length) + '...'
+        }
+        return text
+    })
     Reflect.set(data, 'settings', settings)
     Reflect.set(data, 'body', req.body)
     Reflect.set(data, 'params', req.params)

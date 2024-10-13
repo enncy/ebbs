@@ -36,7 +36,7 @@ export class PluginContext {
             reg.push({ event: event, executor })
         }
     }
-    async emit(plugin: Plugin, event: Event) {
+    async emit(plugin: Plugin | null, event: Event) {
         const listeners = Array.from(this.listeners.values()).flat().filter((listener) => listener.event === event.constructor)
         if (listeners.length) {
             for (const listener of listeners) {

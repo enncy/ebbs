@@ -2,6 +2,31 @@ import { defineModel } from "src/core/plugins"
 import { randomShortId, uuid } from "./utils"
 import { ContentUtils } from "src/utils/content"
 import similarity from 'string-similarity';
+import { FilterQuery } from "mongoose"; 
+
+
+export interface PostCreateParams {
+    user_uid: string,
+    category_uid: string,
+    title: string,
+    text: string,
+    html: string,
+    tags: string[],
+    draft: boolean
+}
+
+export interface PostUpdateParams {
+    title: string,
+    html: string,
+    text: string,
+    tags: string[],
+    permissions?: string[],
+    pin?: boolean,
+    draft?: boolean,
+    locked?: boolean,
+    deleted?: boolean,
+    enable_comment?: boolean,
+}
 
 export class PostDocument {
     uid: string
@@ -25,10 +50,9 @@ export class PostDocument {
     statistics: {
         views: number
         comments: number
-        follows: number
     }
 
-    public static async findByUId(uid: string) {
+    public static async findByUid(uid: string) {
         const post = await PostModel.findOne({ uid })
         if (!post) {
             return null
@@ -41,32 +65,29 @@ export class PostDocument {
 
 
     public static async findByShortId(short_id: string) {
-        const post = await PostModel.findOne({ short_id })
-        if (!post) {
-            return null
-        }
-        if (post.deleted || post.draft) {
-            return null
-        }
-        return post
-    }
+        return await PostModel.findOne({ short_id })
+    } 
 
-    public static async list(query: { category_uid: string, page: number, size: number }) {
-        const common_filter = { deleted: false, draft: false, locked: false }
-        const posts = await PostModel.find({ category_uid: query.category_uid, ...common_filter })
+    public static async list(filter: FilterQuery<PostDocument>, query: {  page: number, size: number }) {
+        const posts = await PostModel.find(filter)
             .sort({ post_at: -1 })
             .skip((query.page - 1) * query.size)
             .limit(query.size)
         return posts
     }
 
-    public static async count(query: { category_uid: string }) {
-        const common_filter = { deleted: false, draft: false, locked: false }
-        return await PostModel.countDocuments({ category_uid: query.category_uid, ...common_filter })
+
+    public static countByUser(user_uid: string) {
+        return PostModel.countDocuments({ user_uid })
+    }
+
+
+    public static async count(query: { category_uid?: string, draft?: boolean, locked?: boolean, deleted?: boolean, user_uid?: string }) {
+        return await PostModel.countDocuments(query)
     }
 
     public static async search(value: string) {
-        const words = ContentUtils.cutForSearch(value)
+        const words = ContentUtils.extract(value)
         const common_filter = { deleted: false, draft: false, locked: false }
         const posts = await PostModel.find({
             $or: [
@@ -94,7 +115,7 @@ export class PostDocument {
         })
     }
 
-    public static async create({ user_uid, category_uid, title, html, text, tags, draft }: { user_uid: string, category_uid: string, title: string, text: string, html: string, tags: string[], draft: boolean }) {
+    public static async create({ user_uid, category_uid, title, html, text, tags, draft }: PostCreateParams) {
         const short_id = await randomShortId(async (id) => !await PostModel.findOne({ short_id: id }))
         return await PostModel.create<PostDocument>({
             uid: uuid(),
@@ -105,8 +126,8 @@ export class PostDocument {
             text,
             html,
             tags,
-            title_keywords: ContentUtils.cutForSearch(title, 10),
-            text_keywords: ContentUtils.cutForSearch(text),
+            title_keywords: ContentUtils.extract(title, 10),
+            text_keywords: ContentUtils.extract(text),
             draft: draft,
             pin: false,
             locked: false,
@@ -115,7 +136,7 @@ export class PostDocument {
             last_edit_at: 0,
             last_comment_at: 0,
             permissions: [],
-            statistics: { comments: 0, views: 0, follows: 0 }
+            statistics: { comments: 0, views: 0 }
         })
     }
 
@@ -171,11 +192,11 @@ export class PostDocument {
         post.tags = update.tags
         if (post.title !== update.title) {
             post.title = update.title
-            post.title_keywords = ContentUtils.cutForSearch(update.title, 10)
+            post.title_keywords = ContentUtils.extract(update.title, 10)
         }
         if (post.text !== update.text) {
             post.text = update.text
-            post.text_keywords = ContentUtils.cutForSearch(update.text)
+            post.text_keywords = ContentUtils.extract(update.text)
         }
         if (post.html !== update.html) {
             post.html = update.html
@@ -198,6 +219,7 @@ export class PostDocument {
         post.last_edit_at = Date.now()
         return post.save()
     }
+
 }
 export const PostModel = defineModel<PostDocument>('Post',
     {
@@ -222,8 +244,7 @@ export const PostModel = defineModel<PostDocument>('Post',
         statistics: {
             likes: { type: Number, default: 0 },
             comments: { type: Number, default: 0 },
-            views: { type: Number, default: 0 },
-            follows: { type: Number, default: 0 }
+            views: { type: Number, default: 0 }
         }
     },
     {

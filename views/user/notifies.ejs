@@ -1,0 +1,101 @@
+<% 
+
+const href_template = `/user/notifies?type=${locals.query.type || 'all'}&p={{page}}`;
+
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%></title>
+  <style>
+    .notifies {
+      max-width: 800px;
+    }
+
+    .notify {
+      padding: 8px 0px;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    .notify a {
+      color: black;
+    }
+
+    .comment a {
+      display: block;
+    }
+
+    .meta {
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+  <div class=" container  ">
+    <div class="m-auto notifies">
+      <div class="card">
+        <div class="card-header">
+          我的通知
+        </div>
+        <div class="card-body">
+          <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+              <a class="nav-link <%= (locals.query.type === 'all' || locals.query.type === undefined) ? 'active' : '' %>" aria-current="page" href="/user/notifies?type=all">全部</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link <%= locals.query.type === 'unread' ? 'active' : '' %>" href="/user/notifies?type=unread">未读</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link <%= locals.query.type === 'reply-post' ? 'active' : '' %>" href="/user/notifies?type=reply-post">评论</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link <%= locals.query.type === 'reply-comment' ? 'active' : '' %>" href="/user/notifies?type=reply-comment">回复</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link <%= locals.query.type === 'system' ? 'active' : '' %>" href="/user/notifies?type=system">系统</a>
+            </li>
+          </ul>
+
+          <div class="ps-lg-2 ps-0 pe-lg-2 pe-0">
+            <% if(!locals.notifies || locals.notifies.length === 0){ %>
+            <div class="empty">暂无通知</div>
+            <% }else{ %>
+            <div>
+
+              <% for(notify of notifies){ %>
+              <div class="notify">
+                <% if(notify.type === 'reply-post'){ %>
+                <div class="meta">
+                  <span class="badge text-bg-<%= notify.read ? 'light' : 'primary' %>"><%= notify.read ? '已读' : '未读' %></span>
+                  <span><%= unit.time(notify.create_at) + '前' %></span>
+                  <a class="sender" target="_blank" href="/u/<%= notify.sender.account%>"><%=notify.sender.nickname || notify.sender.account%></a>
+                  评论了你的帖子 <a target="_blank" href="/p/<%= notify.post.short_id %>" target="_blank"><%= ellipsis(notify.post.title,20) %></a> :
+                </div>
+                <div class="comment"><a href="/user/read-notify?uid=<%= notify.uid %>" target="_blank"><%=  ellipsis(notify.comment.text,20)  %></a></div>
+                <% } %>
+                <% if(notify.type === 'reply-comment'){ %>
+                <div class="meta"><a class="sender" target="_blank" href="/u/<%= notify.sender.account%>"><%=notify.sender.nickname || notify.sender.account%></a> 回复了你的评论： <a target="_blank" href="/post/comment-redirect?cid=<%=  notify.parent.short_id %>" target="_blank"><%=  ellipsis(notify.parent.text,20)  %></a></div>
+                <div class="comment"><a target="_blank" href="/user/read-notify?uid=<%= notify.uid %>" target="_blank"><%=  ellipsis(notify.comment.text, 20)  %></a></div>
+                <% } %>
+              </div>
+              <% } %>
+
+              <div class="mt-2">
+                <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
+              </div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

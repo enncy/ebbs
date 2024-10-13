@@ -11,6 +11,7 @@ export class UserDocument {
     password_salt: string
     avatar: string
     profile: string
+    profile_background: string
     permissions: string[]
     banned: boolean
     register_at: number
@@ -37,6 +38,7 @@ export class UserDocument {
             password_salt: salt,
             avatar: '',
             profile: '',
+            profile_background: '',
             permissions: [],
             banned: false,
             register_at: now,
@@ -105,6 +107,7 @@ export const UserModel = defineModel<UserDocument>('User',
         password_salt: { type: String, required: true },
         nickname: { type: String, index: true, default: '' },
         profile: { type: String, default: '' },
+        profile_background: { type: String, default: '' },
         avatar: { type: String, default: '' },
         permissions: { type: [String], default: [] },
         banned: { type: Boolean, default: false },

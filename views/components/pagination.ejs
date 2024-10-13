@@ -63,22 +63,22 @@ if(total_page < 5){
     border: 1px solid #9c9c9c;
   }
 
-  .goto {  
+  .goto {
     border-radius: 2px;
   }
 
   .goto input {
     width: 64px;
     height: 26px;
-    padding: 2px 4px; 
-    border: 1px solid #eaeaea; 
+    padding: 2px 4px;
+    border: 1px solid #eaeaea;
   }
 
   .goto button {
-    display: inline-block; 
-    cursor: pointer; 
+    display: inline-block;
+    cursor: pointer;
     background: white;
-    border: 1px solid #eaeaea; 
+    border: 1px solid #eaeaea;
   }
 
 
@@ -87,10 +87,13 @@ if(total_page < 5){
   }
 </style>
 
-<div class=" d-flex pagination col-12">
+
+
+<% if(parts.length !== 1){ %>
+<div class="d-flex pagination col-12">
+
   <div class="flex-fill d-flex  align-items-end  gap-1">
 
-    
     <% if(current > 4) {%>
     <a href="<%= locals.href_template?.replace('{{page}}',  1) %>">
       <span>1</span>
@@ -103,13 +106,12 @@ if(total_page < 5){
     <% } %>
 
     <% if(current < total_page - 3) {%>
-      <span class=" text-secondary">...</span>
+    <span class=" text-secondary">...</span>
     <a href="<%= locals.href_template?.replace('{{page}}',  total_page) %>">
       <span><%= total_page %></span>
     </a>
     <% } %>
-
-
+ 
     <% if(total_page > 5){ %>
     <span class="goto ms-2">
       <form class="d-inline-block p-0 m-0 goto" onsubmit="return goto()">
@@ -126,7 +128,11 @@ if(total_page < 5){
     <a href="<%= locals.href_template?.replace('{{page}}',  current + 1) %>"> 下一页 </a>
   </div>
   <% } %>
+
 </div>
+<% } %>
+
+
 
 <script>
   function goto() {

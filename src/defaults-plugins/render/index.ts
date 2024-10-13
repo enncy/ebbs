@@ -9,26 +9,97 @@ import { PassportPlugin, permission } from "../passport";
 import dayjs from 'dayjs';
 import { UploadedFile } from "express-fileupload";
 import sharp from 'sharp';
-import { PostDocument, PostModel } from "src/models/post";
+import { PostCreateParams, PostDocument, PostModel, PostUpdateParams } from "src/models/post";
 import { ContentUtils } from "src/utils/content";
-import { CommentDocument } from "src/models/comment";
+import { CommentCreateParams, CommentDocument, CommentModel } from "src/models/comment";
 import { UserDocument } from "src/models/user";
 import { CategoryGroupDocument } from "src/models/category_group";
-import { UserViewDocument } from "src/models/state/user.view";
-import { UserFollowPostDocument } from "src/models/state/user.follow.post";
+import { UserCollectPostDocument } from "src/models/state/user.collect.post";
+import { CancellableEvent, Event } from "src/core/interfaces";
+import { Document } from "mongoose";
+import { statistic } from "./statistic";
+import { notify } from "./notify";
+import { Request, Response } from "express";
 
+export class UserPreCreatePostEvent extends CancellableEvent {
+    constructor(public user: UserDocument, public params: PostCreateParams) {
+        super()
+    }
+}
+
+export class UserCreatePostEvent extends Event {
+    constructor(public user: UserDocument, public category: Document & CategoryDocument, public post: Document & PostDocument) {
+        super()
+    }
+}
+
+export class UserPreUpdatePostEvent extends CancellableEvent {
+    constructor(public user: UserDocument, public post: Document & PostDocument, public params: PostUpdateParams) {
+        super()
+    }
+}
+
+export class UserUpdatePostEvent extends Event {
+    constructor(public user: UserDocument, public post: Document & PostDocument, public params: PostUpdateParams) {
+        super()
+    }
+}
+
+
+export class PostRenderEvent extends CancellableEvent {
+    constructor(public post: Document & PostDocument, public user?: UserDocument) {
+        super()
+    }
+}
+
+export class UserCollectPostEvent extends CancellableEvent {
+    constructor(public user: UserDocument, public post_uid: string) {
+        super()
+    }
+}
+
+export class UserPrePostCommentEvent extends CancellableEvent {
+    constructor(public user: UserDocument, public params: CommentCreateParams) {
+        super()
+    }
+}
+
+export class UserPostCommentEvent extends Event {
+    constructor(public user: UserDocument, public category: Document & CategoryDocument, public post: Document & PostDocument, public comment: Document & CommentDocument) {
+        super()
+    }
+}
+
+export class UserRemoveCommentEvent extends CancellableEvent {
+    constructor(public user: UserDocument, public comment: Document & CommentDocument) {
+        super()
+    }
+}
 
 definePlugin({
     id: 'render',
     name: 'render-plugin'
 }, (plugin) => {
+
+    // 开启统计
+    statistic(plugin)
+    // 开启通知
+    notify(plugin)
+
+
     const indexView = plugin.definedView('index.ejs', async () => {
         const category_groups = await CategoryGroupDocument.list()
         const category_docs = await CategoryDocument.list()
         return {
             other_categories: category_docs.filter(c => !c.group_uid),
             category_groups: category_groups.map(g => ({ ...g.toJSON(), children: category_docs.filter(c => c.group_uid === g.uid).map(c => c.toJSON()) }))
-                .filter(g => g.children.length > 0)
+                .filter(g => g.children.length > 0),
+            newest_posts: await Promise.all((await PostModel.find({ draft: false, deleted: false }).sort({ create_at: -1 }).limit(10)).map(async p => {
+                return { ...p.toJSON(), user: await UserDocument.findOne({ uid: p.user_uid }) }
+            })),
+            newest_comments: await Promise.all((await CommentModel.find().sort({ create_at: -1 }).limit(10)).map(async c=>{
+                return { ...c.toJSON(), user: await UserDocument.findOne({ uid: c.user_uid }) }
+            }))
         }
     })
 
@@ -54,13 +125,13 @@ definePlugin({
             if (!cat) {
                 return
             }
-            let page_value = parseInt(page!)
             const size = global_config.category.pagination.size
+            let page_value = parseInt(page!)
             if (isNaN(page_value)) {
                 return
             }
             page_value = Math.min(Math.max(1, page_value), global_config.category.max_page)
-            const post_docs = await PostDocument.list({ category_uid: cat.uid, page: page_value, size: size, })
+            const post_docs = await PostDocument.list({ category_uid: cat.uid }, { page: page_value, size: size, })
             const post_count = await PostDocument.count({ category_uid: cat.uid })
             const posts = await Promise.all(post_docs.map(async p => {
                 const user = await UserDocument.findOne({ uid: p.user_uid })
@@ -73,14 +144,14 @@ definePlugin({
 
 
 
-definePlugin({
+const PostPlugin = definePlugin({
     id: 'post',
     name: 'post-plugin',
     apis: {
         '/editor': 'post',
         '/upload': 'post',
         '/comment': 'post',
-        '/follow': 'get',
+        '/collect': 'get',
         '/remove-comment': 'get',
         '/comment-redirect': 'get', // TODO
     },
@@ -106,7 +177,6 @@ definePlugin({
             // post_short_id
             const pid = req.query.pid?.toString().trim()
             const post = pid ? await PostDocument.findByShortId(pid) : null
-            console.log(post);
 
             if (post && post.user_uid !== user.uid) {
                 return plugin.sendError(req, res, 403)
@@ -116,7 +186,8 @@ definePlugin({
                     title: post?.title || '',
                     text: post?.text || '',
                     html: post?.html || '',
-                    tags: post?.tags.join(',') || ''
+                    tags: post?.tags || [],
+                    draft: post?.draft || false
                 }
             })
         }
@@ -170,13 +241,20 @@ definePlugin({
     })
 
 
-    plugin.api('/follow', permission(), async (req, res) => {
+    plugin.api('/collect', permission(), async (req, res) => {
         const user = PassportPlugin.sessions.get(req, 'user')!
         const uid = req.query.uid?.toString()?.trim() || ''
         if (hasBlankParams(uid)) {
             return plugin.sendError(req, res, 400)
         }
-        await UserFollowPostDocument.toggle(user.uid, uid)
+
+        const e = new UserCollectPostEvent(user, uid)
+        await plugin.emit(e)
+        if (e.isCancelled()) {
+            return plugin.sendError(req, res, 403, e.reason)
+        }
+
+        await UserCollectPostDocument.toggle(user.uid, uid)
         res.sendStatus(200)
     })
 
@@ -215,12 +293,25 @@ definePlugin({
         }
 
         // 帖子检测
-        const post = await PostDocument.findByUId(post_uid)
+        const post = await PostDocument.findByUid(post_uid)
         if (!post) {
             return plugin.sendError(req, res, 400, i18n('post.error.post_not_exist'))
         }
 
-        await CommentDocument.create({ user_uid: user.uid, category_uid, post_uid, parent_uid, text, html })
+
+        const params = { user_uid: user.uid, category_uid, post_uid, parent_uid, text, html }
+
+        const e = new UserPrePostCommentEvent(user, params)
+        await plugin.emit(e)
+        if (e.isCancelled()) {
+            return plugin.sendError(req, res, 403, e.reason)
+        }
+
+        const comment = await CommentDocument.create({ user_uid: user.uid, category_uid, post_uid, parent_uid, text, html })
+
+        const event = new UserPostCommentEvent(user, category, post, comment)
+        await plugin.emit(event)
+
 
         res.redirect(`/p/${post.short_id}`)
     })
@@ -242,6 +333,13 @@ definePlugin({
         if (comment.user_uid !== user.uid) {
             return plugin.sendError(req, res, 403)
         }
+
+        const e = new UserRemoveCommentEvent(user, comment)
+        await plugin.emit(e)
+        if (e.isCancelled()) {
+            return plugin.sendError(req, res, 403, e.reason)
+        }
+
         await CommentDocument.remove(comment.uid)
 
         res.redirect(`/p/${pid}`)
@@ -250,28 +348,33 @@ definePlugin({
 
     plugin.api('/comment-redirect', permission(), async (req, res) => {
         // comment_short_id
-        const cid = req.query.cid?.toString()?.trim() || ''
-        // post_short_id
-        const pid = req.query.pid?.toString()?.trim() || ''
-        if (hasBlankParams(cid, pid)) {
+        const cid = req.query.cid?.toString()?.trim()
+        const uid = req.query.uid?.toString()?.trim()
+        if (!cid && !uid) {
             return plugin.sendError(req, res, 400)
         }
 
-        const post = await PostDocument.findByShortId(pid)
+        const comment = cid ? await CommentDocument.findByShortId(cid) : uid ? await CommentDocument.findByUid(uid) : undefined
+        if (!comment) {
+            return plugin.sendError(req, res, 404)
+        }
+
+        const post = await PostDocument.findByUid(comment.post_uid)
         if (!post) {
             return plugin.sendError(req, res, 404)
         }
 
-        let page = 1;
         const count = await CommentDocument.count(post.uid)
-        while ((page - 1) * global_config.post.pagination.size < count) {
+
+        for (let page = 1; (page - 1) * global_config.post.pagination.size < count; page++) {
             const comment_docs = await CommentDocument.list(post.uid, page, global_config.post.pagination.size)
-            const result = comment_docs.find(c => c.short_id === cid)
+            const result = comment_docs.find(c => (c.short_id === cid || c.uid === uid))
             if (result) {
-                return res.redirect(`/p/${pid}?p=${page}#${result.short_id.slice(0, 6)}`)
+                return res.redirect(`/p/${post.short_id}?p=${page}#${result.short_id.slice(0, 6)}`)
             }
-            page++
         }
+
+        return plugin.sendError(req, res, 404)
     })
 
 
@@ -327,15 +430,36 @@ definePlugin({
         }
 
         if (!pid) {
-            const post = await PostDocument.create({ category_uid, user_uid: user.uid, text, html, title: title, tags: tags_value, draft: draft_value })
-            return res.redirect(`/p/${post.short_id}`)
+            const params = { category_uid, user_uid: user.uid, text, html, title: title, tags: tags_value, draft: draft_value }
+            const e = new UserPreCreatePostEvent(user, params)
+            await plugin.emit(e)
+            if (e.notCancelled()) {
+                const post = await PostDocument.create(params)
+                const e = new UserCreatePostEvent(user, category, post)
+                await plugin.emit(e)
+                return res.redirect(`/p/${post.short_id}`)
+            } else {
+                return plugin.sendError(req, res, 403, e.reason)
+            }
         } else {
+
             const post = await PostDocument.findByShortId(pid)
             if (!post) {
                 return res.send(await postEditorView.render(req, { error: i18n('post.error.post_not_exist') }))
             }
-            await PostDocument.update(post.uid, { text, html, title, tags: tags_value, draft: draft_value })
-            return res.redirect(`/p/${post.short_id}`)
+
+
+            const params = { text, html, title, tags: tags_value, draft: draft_value }
+            const e = new UserPreUpdatePostEvent(user, post, params)
+            await plugin.emit(e)
+            if (e.notCancelled()) {
+                const e = new UserUpdatePostEvent(user, post, params)
+                await plugin.emit(e)
+                await PostDocument.update(post.uid, { text, html, title, tags: tags_value, draft: draft_value })
+                return res.redirect(`/p/${post.short_id}`)
+            } else {
+                return plugin.sendError(req, res, 403, e.reason)
+            }
         }
     })
 
@@ -351,7 +475,13 @@ definePlugin({
 
             const post = await PostDocument.findByShortId(post_short_id)
             if (!post) {
-                return plugin.sendError(req, res, 404)
+                return plugin.sendError(req, res, 404, i18n('post.error.post_not_exist'))
+            }
+            if (post.deleted) {
+                return null
+            }
+            if (post.draft && (!user || user.uid !== post.user_uid)) {
+                return plugin.sendError(req, res, 404, i18n('post.error.post_not_exist'))
             }
 
             const category = await CategoryDocument.findByUid(post.category_uid)
@@ -377,18 +507,22 @@ definePlugin({
                 }
             }))
 
+
+            const e = new PostRenderEvent(post, user)
+            await plugin.emit(e)
+            if (e.isCancelled()) {
+                return plugin.sendError(req, res, 403, e.reason)
+            }
+
+
             res.send(await postView.render(req, {
                 category: category.toJSON(), post: {
                     ...post.toJSON(),
-                    followed: user ? await UserFollowPostDocument.isFollowing(user.uid, post.uid) : undefined,
+                    collected: user ? await UserCollectPostDocument.isCollected(user.uid, post.uid) : undefined,
                     user: author?.toJSON()
                 }, comments_count, comments, total_page: Math.ceil(comments_count / global_config.post.pagination.size)
             }))
 
-            // 记录访问量 
-            if (user) {
-                await UserViewDocument.view(user.uid, post.uid)
-            }
         } catch (e) {
             plugin.sendError(req, res, 500, e.message)
         }
@@ -473,6 +607,7 @@ export async function deleteAttachment(filepath: string) {
 
 
 
+
 // 计算所有上传文件的大小 
 // 递归计算文件夹大小和数量
 export async function calculateAllFileSizeAndCount(account: string): Promise<{ total_size: number, total_count: number }> {
@@ -505,3 +640,14 @@ export async function calculateAllFileSizeAndCount(account: string): Promise<{ t
     return { total_size, total_count }
 }
 
+export function sendCommentRedirect(req: Request, res: Response, opts: { comment_short_id?: string, uid?: string }) {
+    if (!opts.comment_short_id && !opts.uid) {
+        return PostPlugin.sendError(req, res, 400)
+    }
+
+    if (opts.comment_short_id) {
+        return res.redirect(`/${PostPlugin.id}/comment-redirect?cid=${opts.comment_short_id}`)
+    }
+
+    return res.redirect(`/${PostPlugin.id}/comment-redirect?uid=${opts.uid}`)
+}
