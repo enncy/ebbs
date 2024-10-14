@@ -5,7 +5,7 @@
     border-bottom: 1px solid #eaeaea;
   }
 
-  .post .statistics {
+  .post .post-list-statistics {
     padding: 0px 6px;
     font-size: 14px;
     white-space: nowrap;
@@ -60,7 +60,7 @@
           <small>最后回复于:<%= unit.timeFrom(item.last_comment_at) %></small>
         </div>
       </div>
-      <div class="statistics text-secondary flex-auto">
+      <div class="post-list-statistics text-secondary flex-auto">
         <div><small>查看 : <%= unit.count(item.statistics.views)  %></small></div>
         <div><small>回帖 : <%= unit.count(item.statistics.comments)   %></small></div>
       </div>
