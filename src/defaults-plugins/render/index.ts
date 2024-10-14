@@ -89,8 +89,8 @@ definePlugin({
 
     const indexView = plugin.definedView('index.ejs', async () => {
         const category_groups = await CategoryGroupDocument.list()
-        const category_docs = await CategoryDocument.list()  
-  
+        const category_docs = await CategoryDocument.list()
+
         return {
             other_categories: category_docs.filter(c => !c.group_uid),
             category_groups: category_groups.map(g => ({ ...g.toJSON(), children: category_docs.filter(c => c.group_uid === g.uid).map(c => c.toJSON()) }))
@@ -119,6 +119,7 @@ definePlugin({
         render: async (req) => {
             const id = req.query.id?.toString().trim()
             const page = req.query.p?.toString().trim() || '1'
+            const sort = req.query.sort?.toString().trim() || 'default' 
             if (hasBlankParams(id, page)) {
                 return
             }
@@ -132,11 +133,11 @@ definePlugin({
                 return
             }
             page_value = Math.min(Math.max(1, page_value), global_config.category.max_page)
-            const post_docs = await PostDocument.list({ category_uid: cat.uid }, { page: page_value, size: size, })
+            const post_docs = await PostDocument.list({ category_uid: cat.uid }, { page: page_value, size: size }, { sort: sort as any })
             const post_count = await PostDocument.count({ category_uid: cat.uid })
             const posts = await Promise.all(post_docs.map(async p => {
                 const user = await UserDocument.findOne({ uid: p.user_uid })
-                return { ...p.toJSON(), user: user?.toJSON() }
+                return { ...p, user: user?.toJSON() }
             }))
             return await categoryView.render(req, { category: cat, posts, total_page: Math.ceil(post_count / size) })
         }

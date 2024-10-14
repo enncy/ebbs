@@ -17,6 +17,6 @@
   </div>
   <% if(post.last_edit_at){ %>
   <small class="split"> | </small>
-  <small class=" text-secondary" title="<%= dayjs(post.last_edit_at) %>"> 最后编辑于：<%= unit.time(post.last_edit_at) %>前</small>
+  <small class=" text-secondary" title="<%= dayjs(post.last_edit_at) %>"> 最后编辑于：<%= unit.timeFrom(post.last_edit_at) %></small>
   <% } %>
 </div>

@@ -49,7 +49,7 @@ definePlugin({
         if (show === 'posts') {
             const post_docs = await PostDocument.list({ user_uid: find_account.uid }, { page: page_value, size: size })
             posts = post_docs.map(p => {
-                return { ...p.toJSON(), user: find_account }
+                return { ...p, user: find_account }
             })
             total_page = Math.ceil(await PostDocument.countByUser(find_account.uid) / size)
         }
@@ -90,7 +90,7 @@ definePlugin({
 
             return draftsView.render(req, {
                 drafts: draft_docs.map(d => {
-                    return { ...d.toJSON(), user }
+                    return { ...d, user }
                 }),
                 total_page: Math.ceil(total_count / size)
             })
@@ -227,14 +227,14 @@ definePlugin({
     }, settingsView), async (req, res) => {
 
         const user = PassportPlugin.sessions.get(req, 'user')
-        const { nickname, profile } = req.body 
+        const { nickname, profile } = req.body
         if (!user) {
             return plugin.sendError(req, res, 403)
         }
         user.nickname = nickname
         user.profile = profile
 
-        PassportPlugin.sessions.set(req, 'user', user) 
+        PassportPlugin.sessions.set(req, 'user', user)
 
         const { acknowledged } = await UserModel.updateOne({ uid: user.uid }, { nickname: user.nickname, profile: user.profile })
         if (acknowledged) {

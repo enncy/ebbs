@@ -72,7 +72,7 @@ const href_template = `/user/notifies?type=${locals.query.type || 'all'}&p={{pag
                 <% if(notify.type === 'reply-post'){ %>
                 <div class="meta">
                   <span class="badge text-bg-<%= notify.read ? 'light' : 'primary' %>"><%= notify.read ? '已读' : '未读' %></span>
-                  <span><%= unit.time(notify.create_at) + '前' %></span>
+                  <span><%= unit.timeFrom(notify.create_at)  %></span>
                   <a class="sender" target="_blank" href="/u/<%= notify.sender.account%>"><%=notify.sender.nickname || notify.sender.account%></a>
                   评论了你的帖子 <a target="_blank" href="/p/<%= notify.post.short_id %>" target="_blank"><%= ellipsis(notify.post.title,20) %></a> :
                 </div>

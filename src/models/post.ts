@@ -50,6 +50,7 @@ export class PostDocument {
     statistics: {
         views: number
         comments: number
+        collects: number
     }
 
     public static async findByUid(uid: string) {
@@ -68,12 +69,54 @@ export class PostDocument {
         return await PostModel.findOne({ short_id })
     }
 
-    public static async list(filter: FilterQuery<PostDocument>, query: { page: number, size: number }) {
+    public static async list(filter: FilterQuery<PostDocument>, pagination: { page: number, size: number }, options: { sort: 'default' | 'recent-post' | 'most-view' | 'most-comment' | 'most-collect' } = { sort: 'default' }): Promise<PostDocument[]> {
+
+        const sort = Object.create({})
+        if (options.sort === 'recent-post') {
+            sort.post_at = -1
+        } else if (options.sort === 'most-view') {
+            sort['statistics.views'] = -1
+        } else if (options.sort === 'most-comment') {
+            sort['statistics.comments'] = -1
+        } else if (options.sort === 'most-collect') {
+            sort['statistics.collects'] = -1
+        }
+        else {
+            const res = await PostModel.aggregate([
+                {
+                    $match: filter
+                },
+                {
+                    $project: {
+                        rank: {
+                            // last_comment_at and post_at
+                            $add: [
+                                "$last_comment_at",
+                                "$post_at"
+                            ]
+                        },
+                        // 原有文档
+                        doc: "$$ROOT"
+                    }
+                },
+                {
+                    $sort: { rank: -1 }
+                },
+                {
+                    $skip: (pagination.page - 1) * pagination.size
+                },
+                {
+                    $limit: pagination.size
+                }
+            ]).exec()  
+            return res.map(r => r.doc)
+        }
+
         const posts = await PostModel.find(filter)
-            .sort({ post_at: -1 })
-            .skip((query.page - 1) * query.size)
-            .limit(query.size)
-        return posts
+            .sort(sort)
+            .skip((pagination.page - 1) * pagination.size)
+            .limit(pagination.size)
+        return posts.map(post => post.toJSON())
     }
 
 
@@ -97,7 +140,7 @@ export class PostDocument {
 
         // 计算相似度
         for (const post of posts) {
-            const rating = similarity.compareTwoStrings(post.title, value) 
+            const rating = similarity.compareTwoStrings(post.title, value)
             Reflect.set(post, 'rating', rating)
         }
 
@@ -134,7 +177,7 @@ export class PostDocument {
             last_edit_at: 0,
             last_comment_at: 0,
             permissions: [],
-            statistics: { comments: 0, views: 0 }
+            statistics: { comments: 0, views: 0, collects: 0 }
         })
     }
 

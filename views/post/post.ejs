@@ -364,7 +364,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
                     <% if( comment.post_at){ %>
                     <small class="split"> | </small>
-                    <small class=" text-secondary " style="font-size: 13px " title="<%= dayjs(comment.post_at) %>"> 评论于：<%= unit.time(comment.post_at)   %>前</small>
+                    <small class=" text-secondary " style="font-size: 13px " title="<%= dayjs(comment.post_at) %>"> 评论于：<%= unit.timeFrom(comment.post_at) %></small>
                     <% } %>
 
                   </div>

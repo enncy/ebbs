@@ -83,12 +83,10 @@ const href_template = '/category?id=' + locals.query.id + '&p={{page}}';
         <div class="mt-2 mb-2 d-flex gap-2">
           <div class="flex-fill d-flex gap-2">
             <div>
-              <select class="form-select form-select-sm" style="width:120px;">
-                <option value="recent-post" selected>最近发布</option>
-                <option value="recent-comment">最近回帖</option>
-                <option value="most-view">最多浏览</option>
-                <option value="most-comment">最多评论</option>
-                <option value="most-collect">最多收藏</option>
+              <select class="form-select form-select-sm" style="width:120px;" onchange="onSortChange(this)">
+                <% for(const option of [['default','默认排序'],['recent-post','最近发布'],['most-view','最多浏览'],['most-comment','最多评论'],['most-collect','最多收藏']]){ %>
+                <option value="<%= option[0] %>" <%= locals.query.sort === option[0] ? 'selected' : '' %>><%= option[1] %></option>
+                <% } %>
               </select>
             </div>
 
@@ -96,8 +94,8 @@ const href_template = '/category?id=' + locals.query.id + '&p={{page}}';
               <form action="/post/search" method="post">
                 <div class="input-group ">
                   <input type="hidden" name="category_uid" value="<%= category.uid %>">
-                  <input type="text" name="value"  class="form-control form-control-sm" placeholder="搜索此分区下帖子..." aria-describedby="button-addon2">
-                  <button class="btn btn-sm btn-outline-secondary" type="submit" >搜索</button>
+                  <input type="text" name="value" class="form-control form-control-sm" placeholder="搜索此分区下帖子..." aria-describedby="button-addon2">
+                  <button class="btn btn-sm btn-outline-secondary" type="submit">搜索</button>
                 </div>
               </form>
             </div>
@@ -140,6 +138,14 @@ const href_template = '/category?id=' + locals.query.id + '&p={{page}}';
     window.onload = () => {
       window.onresize = resize;
       resize()
+    }
+
+
+    function onSortChange(select) {
+      const value = select.value;
+      const url = new URL(window.location.href);
+      url.searchParams.set('sort', value);
+      window.location.href = url.href;
     }
   </script>
 </body>

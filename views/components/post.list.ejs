@@ -12,18 +12,22 @@
   }
 
   .post .title a {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: bold;
     color: #3a3a3a !important;
   }
 
   .post .description {
-    font-size: 13px;
+    font-size: 14px;
     min-width: 300px;
     color: #666;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+  }
+
+  .post .meta {
+    font-size: 13px;
   }
 
   .title a:hover {
@@ -51,6 +55,10 @@
           <% } %>
           <span>：<%= ellipsis(item.text.trim(), 50)  %></span>
         </div>
+        <div class="meta text-secondary d-flex gap-3">
+          <small>创建于:<%= unit.timeFrom(item.post_at) %></small> 
+          <small>最后回复于:<%= unit.timeFrom(item.last_comment_at) %></small>
+        </div>
       </div>
       <div class="statistics text-secondary flex-auto">
         <div><small>查看 : <%= unit.count(item.statistics.views)  %></small></div>
@@ -61,7 +69,7 @@
   <% } %>
 </div>
 <% } else { %>
-<div class="p-2 text-center border rounded"> 
+<div class="p-2 text-center border rounded">
   <p class="card-text"><%= i18n('_dict_.no_data') %></p>
 </div>
 <% } %>
