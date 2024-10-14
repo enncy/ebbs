@@ -2,7 +2,7 @@ import { defineModel } from "src/core/plugins"
 import { randomShortId, uuid } from "./utils"
 import { ContentUtils } from "src/utils/content"
 import similarity from 'string-similarity';
-import { FilterQuery } from "mongoose"; 
+import { FilterQuery } from "mongoose";
 
 
 export interface PostCreateParams {
@@ -66,9 +66,9 @@ export class PostDocument {
 
     public static async findByShortId(short_id: string) {
         return await PostModel.findOne({ short_id })
-    } 
+    }
 
-    public static async list(filter: FilterQuery<PostDocument>, query: {  page: number, size: number }) {
+    public static async list(filter: FilterQuery<PostDocument>, query: { page: number, size: number }) {
         const posts = await PostModel.find(filter)
             .sort({ post_at: -1 })
             .skip((query.page - 1) * query.size)
@@ -86,20 +86,18 @@ export class PostDocument {
         return await PostModel.countDocuments(query)
     }
 
-    public static async search(value: string) {
+    public static async search(value: string, filter: FilterQuery<PostDocument>) {
         const words = ContentUtils.extract(value)
-        const common_filter = { deleted: false, draft: false, locked: false }
         const posts = await PostModel.find({
+            ...filter,
             $or: [
-                { title_keywords: { $in: words }, ...common_filter },
-                { text_keywords: { $in: words }, ...common_filter },
+                { title_keywords: { $in: words } }
             ]
         })
 
         // 计算相似度
         for (const post of posts) {
-            const rating = similarity.compareTwoStrings(post.title, value)
-            console.log(value, post.title, rating);
+            const rating = similarity.compareTwoStrings(post.title, value) 
             Reflect.set(post, 'rating', rating)
         }
 

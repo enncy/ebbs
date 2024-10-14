@@ -92,6 +92,7 @@
     "passport.reset.reset_success": "重置密码成功，即将跳转登录页面...",
     "admin.sidebar.category": "论坛分区",
     "admin.sidebar.general_setting": "通用设置",
+    "admin.sidebar.user_manager": "用户管理",
     "admin.form.category_group.create_new": "新建分区组",
     "admin.form.category_group.update": "更新分区组",
     "admin.form.category.create_new": "新建分区",

@@ -79,6 +79,7 @@
     <div>
       <div class="d-flex flex-wrap justify-content-center">
         <div style="max-width: 800px;" class="col-lg-8 col-12 me-lg-4 me-0">
+    
           <% if (locals.category_groups?.length) { %>
           <div class="categorys">
             <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
@@ -88,7 +89,7 @@
               <h5 class="card-header"><%= category_group.name %></h5>
               <div class="card-body">
                 <% for (let j = 0 ;j < category_group.children.length; j++) {  %>
-                <% const item = category_group.children[i]; %>
+                <% const item = category_group.children[j]; %>
                 <a href="/category?id=<%= item.short_id %>" class="text-dark text-decoration-none mb-3 d-block">
                   <div class="category cursor-pointer">
                     <div class="icon"><img src="<%= item.icon || '/default_category_icon.png' %>" alt="icon" width="64" height="64"> </div>

@@ -9,12 +9,32 @@
 <header class="p-lg-2 p-1 mb-3 border-bottom bg-white">
   <div class="container-lg">
     <div class="d-flex flex-nowrap align-items-center justify-content-center justify-content-lg-start">
- 
-      <ul class="flex-fill nav col-12 col-lg-auto me-lg-auto  mb-md-0">
-        <li><a href="/" class="nav-link px-2 link-secondary"><%=locals.settings.name%></a></li>
-        <% if (locals.user?.permissions?.includes('admin')) { %>
-        <li><a href="/admin/index" class="nav-link px-2 link-secondary">admin</a></li>
+
+      <ul class="flex-fill nav col-12 col-lg-auto me-lg-auto   mb-md-0 align-items-center ">
+        <% for(const menu of locals.settings.menus){ %>
+
+        <% if(menu.type === 'html'){ %>
+        <li><%= menu.html %></li>
         <% } %>
+
+        <% if(menu.type === 'link'){ %>
+        <li><a href="<%= menu.href %>" class="nav-link px-2 link-secondary"><%= menu.text %></a></li>
+        <% } %>
+
+        <% } %>
+
+        <% if (locals.user?.permissions?.includes('admin')) { %>
+        <li><a href="/admin/index" class="nav-link px-2 link-secondary">Admin</a></li>
+        <% } %>
+
+        <li class="ms-2 me-2">
+          <form action="/post/search" method="post" class="mb-0">
+            <div class="input-group ">
+              <input type="text" name="value" class="form-control form-control-sm" placeholder="搜索帖子..." aria-describedby="button-addon2"> 
+              <button class="btn btn-sm btn-outline-secondary" type="submit">搜索</button>
+            </div>
+          </form>
+        </li>
       </ul>
 
       <div class="flex-auto dropdown text-end">
@@ -25,7 +45,7 @@
         </a>
         <ul class="dropdown-menu text-small">
           <li><a class="dropdown-item" href="/u/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
-          <li><a class="dropdown-item" href="/user/settings"><%= i18n('_dict_.personal_setting') %></a></li> 
+          <li><a class="dropdown-item" href="/user/settings"><%= i18n('_dict_.personal_setting') %></a></li>
           <li>
             <hr class="dropdown-divider">
           </li>

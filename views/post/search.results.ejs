@@ -1,0 +1,42 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('/views/header') %>
+  <title><%=locals.settings.name%></title>
+  <style>
+    .drafts {
+      max-width: 800px;
+    }
+  </style>
+</head>
+
+<body>
+  <%- include('/views/menus') %>
+  <div class=" container  ">
+    <div class="m-auto drafts">
+      <div class="card">
+        <div class="card-header">
+          搜索结果
+        </div>
+        <div class="card-body">
+          <% if(!locals.results || locals.results.length === 0){ %>
+          <div class="empty">暂无数据</div>
+          <% }else{ %>
+          <div> 
+            <div>共搜索到 <%= locals.results.length %> 个结果 : </div>
+            <hr class="mb-2 mt-2 text-secondary">
+            <div>
+              <%- include('/views/components/post.list.ejs', {posts: locals.results }) %>
+            </div> 
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

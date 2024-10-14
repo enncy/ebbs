@@ -10,7 +10,7 @@
   }
 </style>
 <ul class="list-group">
-  <% for (const element of ['category:/admin/index', 'general_setting:/admin/general_setting']) { %>
+  <% for (const element of ['category:/admin/index', 'general_setting:/admin/general_setting', 'user_manager:/admin/user_manager']) { %>
   <li class="list-group-item cursor-pointer" <%= active === element.split(':')[0] ? 'active' : '' %>> <a class="text-decoration-none " href="<%=  element.split(':')[1] %>"><%= i18n('admin.sidebar.' + element.split(':')[0]) %></a> </li>
   <%  } %>
 </ul>

@@ -89,7 +89,8 @@ definePlugin({
 
     const indexView = plugin.definedView('index.ejs', async () => {
         const category_groups = await CategoryGroupDocument.list()
-        const category_docs = await CategoryDocument.list()
+        const category_docs = await CategoryDocument.list()  
+  
         return {
             other_categories: category_docs.filter(c => !c.group_uid),
             category_groups: category_groups.map(g => ({ ...g.toJSON(), children: category_docs.filter(c => c.group_uid === g.uid).map(c => c.toJSON()) }))
@@ -97,7 +98,7 @@ definePlugin({
             newest_posts: await Promise.all((await PostModel.find({ draft: false, deleted: false }).sort({ create_at: -1 }).limit(10)).map(async p => {
                 return { ...p.toJSON(), user: await UserDocument.findOne({ uid: p.user_uid }) }
             })),
-            newest_comments: await Promise.all((await CommentModel.find().sort({ create_at: -1 }).limit(10)).map(async c=>{
+            newest_comments: await Promise.all((await CommentModel.find().sort({ create_at: -1 }).limit(10)).map(async c => {
                 return { ...c.toJSON(), user: await UserDocument.findOne({ uid: c.user_uid }) }
             }))
         }
@@ -140,6 +141,9 @@ definePlugin({
             return await categoryView.render(req, { category: cat, posts, total_page: Math.ceil(post_count / size) })
         }
     })
+
+
+
 })
 
 
@@ -148,6 +152,7 @@ const PostPlugin = definePlugin({
     id: 'post',
     name: 'post-plugin',
     apis: {
+        '/search': 'post',
         '/editor': 'post',
         '/upload': 'post',
         '/comment': 'post',
@@ -165,6 +170,31 @@ const PostPlugin = definePlugin({
 
     const postView = plugin.definedView('post.ejs', () => {
         return { video_supports: global_config.post.video_supports, upload_file_size_limit: global_config.post.upload_file_size_limit, ...global_config.post.content }
+    })
+
+    const searchResultsView = plugin.definedView('search.results.ejs')
+
+    plugin.api('/search', permission(), async (req, res) => {
+        const { value, category_uid, user_uid } = req.body
+        if (hasBlankParams(value)) {
+            return plugin.sendError(req, res, 400)
+        }
+
+        const filter = Object.create({})
+        if (category_uid) {
+            filter.category_uid = category_uid
+        }
+        if (user_uid) {
+            filter.user_uid = user_uid
+        }
+
+        const results = await PostDocument.search(value, { ...filter, draft: false, deleted: false, locked: false })
+        results.slice(0, global_config.post.pagination.size)
+        res.send(await searchResultsView.render(req, {
+            results: await Promise.all(results.map(async r => {
+                return { ...r.toJSON(), user: await UserDocument.findOne({ uid: r.user_uid }) }
+            }))
+        }))
     })
 
     plugin.definePage({

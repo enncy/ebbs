@@ -70,7 +70,7 @@ definePlugin({
         if (typeof icon !== 'string') {
             return plugin.sendError(req, res, 400)
         }
-        if (icon.trim() === '' || icon.startsWith('http') === false) {
+        if (icon.trim() !== '' && icon.startsWith('http') === false) {
             return plugin.sendError(req, res, 400, i18n('admin.error.category.invalid_icon_link'))
         }
 
