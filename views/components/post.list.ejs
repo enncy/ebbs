@@ -44,27 +44,29 @@
   <% for (let i = 0 ;i < locals.posts.length; i++) {  %>
   <% const item = locals.posts[i]; %>
   <div class="mb-1">
-    <div class="post">
+    <a class="post text-decoration-none text-dark" href="/p/<%= item.short_id %>">
       <div class="info flex-fill">
-        <div class="title"><a class=" text-decoration-none d-inline-block w-100" href="/p/<%= item.short_id %>"><%= item.title %></a></div>
+        <div class="title"> <%= item.title %> </div>
         <div class="description">
           <% if(item.user){ %>
-          <a class=" text-dark" href="/u/<%= item.user.account  %>"><%= item.user.nickname || item.user.account %></a>
+          <span class=" text-dark"  ><%= item.user.nickname || item.user.account %></span>
           <% }else{ %>
           <a class=" text-dark">未知</a>
           <% } %>
           <span>：<%= ellipsis(item.text.trim(), 50)  %></span>
         </div>
         <div class="meta text-secondary d-flex gap-3">
-          <small>创建于:<%= unit.timeFrom(item.post_at) %></small> 
+          <small>创建于:<%= unit.timeFrom(item.post_at) %></small>
+          <% if(item.last_comment_at){ %>
           <small>最后回复于:<%= unit.timeFrom(item.last_comment_at) %></small>
+          <% } %>
         </div>
       </div>
       <div class="post-list-statistics text-secondary flex-auto">
         <div><small>查看 : <%= unit.count(item.statistics.views)  %></small></div>
         <div><small>回帖 : <%= unit.count(item.statistics.comments)   %></small></div>
       </div>
-    </div>
+    </a>
   </div>
   <% } %>
 </div>

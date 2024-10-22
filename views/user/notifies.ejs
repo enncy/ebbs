@@ -15,12 +15,18 @@ const href_template = `/user/notifies?type=${locals.query.type || 'all'}&p={{pag
       max-width: 800px;
     }
 
-    .notify {
-      padding: 8px 0px;
+    .notify-wrapper {
       border-bottom: 1px solid #eaeaea;
     }
 
-    .notify a {
+    .notify-wrapper:hover {
+      background-color: #f9f9f9;
+    }
+
+    .notify {
+      display: block;
+      padding: 8px 0px;
+      text-decoration: none;
       color: black;
     }
 
@@ -57,6 +63,9 @@ const href_template = `/user/notifies?type=${locals.query.type || 'all'}&p={{pag
               <a class="nav-link <%= locals.query.type === 'reply-comment' ? 'active' : '' %>" href="/user/notifies?type=reply-comment">回复</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link <%= locals.query.type === 'followed' ? 'active' : '' %>" href="/user/notifies?type=followed">关注</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link <%= locals.query.type === 'system' ? 'active' : '' %>" href="/user/notifies?type=system">系统</a>
             </li>
           </ul>
@@ -68,21 +77,35 @@ const href_template = `/user/notifies?type=${locals.query.type || 'all'}&p={{pag
             <div>
 
               <% for(notify of notifies){ %>
-              <div class="notify">
-                <% if(notify.type === 'reply-post'){ %>
-                <div class="meta">
-                  <span class="badge text-bg-<%= notify.read ? 'light' : 'primary' %>"><%= notify.read ? '已读' : '未读' %></span>
-                  <span><%= unit.timeFrom(notify.create_at)  %></span>
-                  <a class="sender" target="_blank" href="/u/<%= notify.sender.account%>"><%=notify.sender.nickname || notify.sender.account%></a>
-                  评论了你的帖子 <a target="_blank" href="/p/<%= notify.post.short_id %>" target="_blank"><%= ellipsis(notify.post.title,20) %></a> :
-                </div>
-                <div class="comment"><a href="/user/read-notify?uid=<%= notify.uid %>" target="_blank"><%=  ellipsis(notify.comment.text,20)  %></a></div>
-                <% } %>
-                <% if(notify.type === 'reply-comment'){ %>
-                <div class="meta"><a class="sender" target="_blank" href="/u/<%= notify.sender.account%>"><%=notify.sender.nickname || notify.sender.account%></a> 回复了你的评论： <a target="_blank" href="/post/comment-redirect?cid=<%=  notify.parent.short_id %>" target="_blank"><%=  ellipsis(notify.parent.text,20)  %></a></div>
-                <div class="comment"><a target="_blank" href="/user/read-notify?uid=<%= notify.uid %>" target="_blank"><%=  ellipsis(notify.comment.text, 20)  %></a></div>
-                <% } %>
+              <div class="notify-wrapper">
+                <a class="notify" href="/user/read-notify?uid=<%= notify.uid %>" target="_blank"> 
+                  <div class="meta">
+                    <span class="badge text-bg-<%= notify.read ? 'light' : 'primary' %>"><%= notify.read ? '已读' : '未读' %></span>
+                    <span><%= unit.timeFrom(notify.create_at)  %></span>
+                  </div>
+                  <% if(notify.type === 'reply-post'){ %>
+                  <div>
+                    <span><%=notify.data.reply_post.sender_nickname || notify.data.reply_post.sender_account%></span>
+                    评论了你的帖子：<%= ellipsis(notify.data.reply_post.post_title,20) %>
+                  </div>
+                  <div class="comment"><%=  ellipsis(notify.data.reply_post.comment_text,20)  %></div>
+                  <% } %>
+                  <% if(notify.type === 'reply-comment'){ %>
+                  <div>
+                    <span><%=notify.data.reply_comment.sender_nickname || notify.data.reply_comment.sender_account%></span>
+                    回复了你的评论： <%=  ellipsis(notify.data.reply_comment.parent_text,20)  %>
+                  </div>
+                  <div class="comment"><%=  ellipsis(notify.data.reply_comment.comment_text, 20)  %></div>
+                  <% } %>
+                  <% if(notify.type === 'followed'){ %>
+                  <div>
+                    <span><%=notify.data.followed.author_nickname || notify.data.followed.author_account%></span>
+                    发布了新帖子： <%=  ellipsis(notify.data.followed.post_title, 20)  %>
+                  </div>
+                  <% } %> 
+                </a> 
               </div>
+
               <% } %>
 
               <div class="mt-2">

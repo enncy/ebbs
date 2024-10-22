@@ -1,7 +1,7 @@
 import { defineModel } from "src/core/plugins"
 import { uuid } from "./utils"
 
-export type NotifyType = 'system' | 'reply-comment' | 'reply-post'
+export type NotifyType = 'system' | 'reply-comment' | 'reply-post' | 'followed'
 
 export class NotifyDocument {
     uid: string
@@ -9,13 +9,34 @@ export class NotifyDocument {
     receiver_uid: string
     type: NotifyType
     data: {
-        reply_comment?: {
-            parent_uid: string
+        reply_comment?: { 
             comment_uid: string
+            comment_text: string
+            comment_short_id: string
+            parent_uid: string
+            parent_text: string
+            parent_short_id: string
+            sender_uid: string
+            sender_account: string
+            sender_nickname: string
         }
         reply_post?: {
             post_uid: string
-            comment_uid: string
+            post_short_id: string
+            post_title: string
+            comment_uid: string 
+            comment_text: string
+            sender_uid: string
+            sender_account: string
+            sender_nickname: string
+        },
+        followed?: {
+            post_short_id: string
+            post_uid: string
+            post_title: string
+            author_uid: string
+            author_account: string
+            author_nickname: string
         }
     }
     read: boolean
@@ -24,7 +45,7 @@ export class NotifyDocument {
     public static findByUid(uid: string) {
         return NotifyModel.findOne({ uid: uid })
     }
- 
+
     public static create(opts: {
         sender_uid?: string
         receiver_uid: string,
@@ -39,6 +60,11 @@ export class NotifyDocument {
             data: opts.data,
             create_at: Date.now()
         })
+    }
+
+
+    public static countUnread(receiver_uid: string) {
+        return NotifyModel.countDocuments({ receiver_uid, read: false })
     }
 }
 export const NotifyModel = defineModel<NotifyDocument>('Notify',

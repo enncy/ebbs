@@ -20,23 +20,48 @@
           个人设置
         </div>
         <div class="card-body">
-          <form method="post" action="/user/settings">
+          <form method="post" action="/user/settings" enctype="multipart/form-data">
             <div class="mb-3">
               <label for="email" class="form-label">邮箱</label>
-              <input  type="email" disabled class="form-control" id="email" placeholder="输入你的邮箱..." value="<%= locals.user.email %>">
+              <input type="email" disabled class="form-control" id="email" placeholder="输入你的邮箱..." value="<%= locals.user.email %>">
             </div>
             <div class="mb-3">
               <label for="nickname" class="form-label">昵称</label>
-              <input name="nickname" class="form-control" id="nickname" placeholder="输入你的昵称..." value="<%= locals.user.nickname %>"> 
+              <input name="nickname" class="form-control" id="nickname" placeholder="输入你的昵称..." value="<%= locals.user.nickname %>">
             </div>
             <div class="mb-3">
               <label for="profile" class="form-label">简介</label>
-              <textarea  name="profile" class="form-control" id="profile" rows="3" placeholder="输入你的简介..." ><%= locals.user.profile %></textarea>
+              <textarea name="profile" class="form-control" id="profile" rows="3" placeholder="输入你的简介..."><%= locals.user.profile %></textarea>
             </div>
-            
+
+            <div class="mb-3">
+              <label for="avatar" class="form-label">头像</label>
+              <input class="form-control" type="file" id="avatar" name="avatar">
+              <% if(locals.user.avatar){ %>
+              <div class="mt-2">
+                <div class="mb-1"><a href="/user/delete-image?type=avatar" type="button" class="btn btn-sm btn-outline-secondary">删除 x</a></div>
+                <img src="<%= locals.user.avatar %>" style="max-width: 128px">
+              </div>
+              <% }  %>
+            </div>
+
+            <div class="mb-3">
+              <label for="bg" class="form-label">简介背景</label>
+              <input class="form-control" type="file" id="bg" name="bg" value="<%= locals.user.profile_background %>">
+              <% if(locals.user.profile_background){ %>
+              <div class="mt-2">
+                <div class="mb-1"><a href="/user/delete-image?type=profile_background" type="button" class="btn btn-sm btn-outline-secondary">删除 x</a></div>
+                <img src="<%= locals.user.profile_background %>" style="max-width: 100%">
+              </div>
+              <% }  %>
+            </div>
+
+            <hr>
+
             <div class="text-end">
               <button type="submit" class="btn w-25 btn-primary">保存</button>
             </div>
+
           </form>
         </div>
       </div>

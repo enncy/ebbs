@@ -4,11 +4,13 @@ import { PostDocument, PostModel } from "src/models/post";
 import { UserFollowUserDocument } from "src/models/state/user.follow.user";
 import { UserDocument, UserModel } from "src/models/user";
 import { hasBlankParams } from "src/utils";
-import { PassportPlugin } from "../passport";
+import { PassportPlugin, permission } from "../passport";
 import { NotifyDocument, NotifyModel, NotifyType } from "src/models/notify";
 import { CommentDocument } from "src/models/comment";
 import { sendCommentRedirect } from "../render";
 import { UserCollectPostDocument } from "src/models/state/user.collect.post";
+import { UserAttachment } from "src/utils/file";
+import { ViewRenderEvent } from "src/events/page";
 
 
 
@@ -18,7 +20,10 @@ definePlugin({
     name: 'user-plugin',
     apis: {
         '/read-notify': 'get',
-        '/settings': 'post'
+        '/delete-image': 'get',
+        '/settings': 'post',
+        '/toggle-follow': 'get',
+        '/report': 'get',
     },
 }, (plugin, app) => {
 
@@ -28,6 +33,7 @@ definePlugin({
         const account = req.params.account?.trim() || ''
         const page = req.query.p?.toString().trim() || '1'
         const show = req.query.show?.toString().trim() || ''
+        const user = PassportPlugin.sessions.get(req, 'user')
         if (hasBlankParams(account, page)) {
             return plugin.sendError(req, res, 400)
         }
@@ -61,8 +67,12 @@ definePlugin({
             follows = await UserFollowUserDocument.list({ user_uid: find_account.uid }, page_value, size)
             total_page = Math.ceil(await UserFollowUserDocument.count({ user_uid: find_account.uid }) / size)
         }
+        let followed = false;
+        if (user) {
+            followed = await UserFollowUserDocument.isFollowing(user, find_account)
+        }
 
-        return res.send(await userView.render(req, { account: find_account, total_page, posts, fans, follows }))
+        return res.send(await userView.render(req, { account: find_account, total_page, posts, fans, follows, followed }))
     })
 
 
@@ -71,13 +81,12 @@ definePlugin({
     const notifiesView = plugin.definedView('notifies.ejs')
     const settingsView = plugin.definedView('settings.ejs')
 
-
     plugin.definePage({
         path: '/drafts',
         render: async (req, res) => {
             const user = PassportPlugin.sessions.get(req, 'user')
             if (!user) {
-                return res.redirect('/passport/login')
+                return res.redirect(PassportPlugin.api('/login'))
             }
             const page = req.query.p?.toString().trim() || '1'
             const size = global_config.user.pagination.size
@@ -103,7 +112,7 @@ definePlugin({
         render: async (req, res) => {
             const user = PassportPlugin.sessions.get(req, 'user')
             if (!user) {
-                return res.redirect('/passport/login')
+                return res.redirect(PassportPlugin.api('/login'))
             }
             const page = req.query.p?.toString().trim() || '1'
             const size = global_config.user.pagination.size
@@ -129,7 +138,7 @@ definePlugin({
         render: async (req, res) => {
             const user = PassportPlugin.sessions.get(req, 'user')
             if (!user) {
-                return res.redirect('/passport/login')
+                return res.redirect(PassportPlugin.api('/login'))
             }
             const page = req.query.p?.toString().trim() || '1'
             const type = req.query.type?.toString().trim() || 'all'
@@ -146,6 +155,8 @@ definePlugin({
                 notify_type = 'reply-post'
             } else if (type === 'system') {
                 notify_type = 'system'
+            } else if (type === 'followed') {
+                notify_type = 'followed'
             } else if (type === 'unread') {
                 unread = '1'
             }
@@ -165,25 +176,18 @@ definePlugin({
                 .limit(size)
 
             return notifiesView.render(req, {
-                notifies: await Promise.all(docs.map(async n => {
-                    const data = n.toJSON()
-                    Reflect.set(data, 'sender', await UserDocument.findOne({ uid: n.sender_uid }))
-                    if (n.type === 'reply-comment' && n.data.reply_comment) {
-                        Reflect.set(data, 'comment', await CommentDocument.findByUid(n.data.reply_comment.comment_uid))
-                        Reflect.set(data, 'parent', await CommentDocument.findByUid(n.data.reply_comment.parent_uid))
-                    }
-                    if (n.type === 'reply-post' && n.data.reply_post) {
-                        Reflect.set(data, 'post', await PostDocument.findByUid(n.data.reply_post.post_uid))
-                        Reflect.set(data, 'comment', await CommentDocument.findByUid(n.data.reply_post.comment_uid))
-                    }
-                    return data
-                })),
+                notifies: docs,
                 total_page: Math.ceil(total_count / size)
             })
         }
     })
 
-    plugin.api('/read-notify', async (req, res) => {
+    plugin.definePage({
+        path: '/settings',
+        render: settingsView.render
+    })
+
+    plugin.api('/read-notify', permission(), async (req, res) => {
         const user = PassportPlugin.sessions.get(req, 'user')
         if (!user) {
             return plugin.sendError(req, res, 403)
@@ -210,33 +214,53 @@ definePlugin({
                 return plugin.sendError(req, res, 403)
             }
             return sendCommentRedirect(req, res, { uid: comment_uid })
-        } else {
+        }
+        else if (notify.type === 'followed' && notify.data.followed) {
+            return res.redirect(`/p/${notify.data.followed.post_short_id}`)
+        }
+        else {
             return plugin.sendError(req, res, 500)
         }
     })
 
-    plugin.definePage({
-        path: '/settings',
-        render: settingsView.render
-    })
 
-
-    plugin.api('/settings', plugin.validator((req) => req.body, {
-        nickname: { max_length: 20, min_length: 2, type: 'string' },
-        profile: { max_length: 100, min_length: 2, type: 'string' }
+    plugin.api('/settings', permission(), plugin.validator((req) => req.body, {
+        nickname: { max_length: 20, min_length: 2, type: 'string', required: false },
+        profile: { max_length: 100, min_length: 2, type: 'string', required: false }
     }, settingsView), async (req, res) => {
-
         const user = PassportPlugin.sessions.get(req, 'user')
+
+        const { bg, avatar } = req.files || {}
         const { nickname, profile } = req.body
         if (!user) {
             return plugin.sendError(req, res, 403)
         }
-        user.nickname = nickname
-        user.profile = profile
+        if (user.nickname !== nickname) {
+            user.nickname = nickname
+        }
+        if (user.profile !== profile) {
+            user.profile = profile
+        }
+
+        try {
+            const ua = UserAttachment.of(user, 'images')
+            if (bg && Array.isArray(bg) === false) {
+                bg.name = 'bg.png'
+                const { url } = await ua.addImage(bg, { overwrite: true })
+                user.profile_background = url
+            }
+            if (avatar && Array.isArray(avatar) === false) {
+                avatar.name = 'avatar.png'
+                const { url } = await ua.addImage(avatar, { overwrite: true })
+                user.avatar = url
+            }
+        } catch (e) {
+            return plugin.sendError(req, res, 500, e.message)
+        }
 
         PassportPlugin.sessions.set(req, 'user', user)
 
-        const { acknowledged } = await UserModel.updateOne({ uid: user.uid }, { nickname: user.nickname, profile: user.profile })
+        const { acknowledged } = await UserModel.updateOne({ uid: user.uid }, { nickname: user.nickname, profile: user.profile, avatar: user.avatar, profile_background: user.profile_background })
         if (acknowledged) {
             return res.redirect('/user/settings')
         } else {
@@ -244,4 +268,57 @@ definePlugin({
         }
     })
 
+
+    plugin.api('/delete-image', permission(), async (req, res) => {
+        const type = req.query.type?.toString().trim()
+        const user = PassportPlugin.sessions.get(req, 'user')
+        if (!user) {
+            return plugin.sendError(req, res, 403)
+        }
+        const ua = UserAttachment.of(user, 'images')
+        if (type === 'avatar') {
+            user.avatar = ''
+            ua.delete('avatar.png')
+        } else if (type === 'profile_background') {
+            user.profile_background = ''
+            ua.delete('bg.png')
+        } else {
+            return plugin.sendError(req, res, 400)
+        }
+        const { acknowledged } = await UserModel.updateOne({ uid: user.uid }, { avatar: user.avatar, profile_background: user.profile_background })
+        if (acknowledged) {
+            return res.redirect('/user/settings')
+        } else {
+            return plugin.sendError(req, res, 500)
+        }
+    })
+
+
+    plugin.api('/toggle-follow', permission(), async (req, res) => {
+        const user = PassportPlugin.sessions.get(req, 'user')
+        if (!user) {
+            return plugin.sendError(req, res, 403)
+        }
+        const target_account = req.query.account?.toString().trim()
+        if (hasBlankParams(target_account)) {
+            return plugin.sendError(req, res, 400)
+        }
+        const target = await UserDocument.findOne({ account: target_account })
+        if (!target) {
+            return plugin.sendError(req, res, 404)
+        }
+        await UserFollowUserDocument.toggle(user, target)
+        return res.redirect(`/u/${target_account}`)
+    })
+
+    plugin.on(ViewRenderEvent, async e => {
+        e.data = e.data || {}
+        const user = PassportPlugin.sessions.get(e.req, 'user')
+        if (user) {
+            e.data.notify_count = await NotifyDocument.countUnread(user.uid) 
+        }
+    })
+
 })
+
+

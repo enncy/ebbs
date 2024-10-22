@@ -32,6 +32,13 @@ export class UserFollowUserDocument {
         return users.filter(user => !!user)
     } 
 
+    public static async listAll(filter: { user_uid?: string, target_uid?: string }) {
+        if(!filter.user_uid && !filter.target_uid) {
+            throw new Error('filter.user_uid or filter.target_uid is required')
+        } 
+        return await UserFollowUserModel.find(filter)
+    }
+
     public static count(filter: { user_uid?: string, target_uid?: string }) {
         if(!filter.user_uid && !filter.target_uid) {
             throw new Error('filter.user_uid or filter.target_uid is required')

@@ -30,7 +30,7 @@
         <li class="ms-2 me-2">
           <form action="/post/search" method="post" class="mb-0">
             <div class="input-group ">
-              <input type="text" name="value" class="form-control form-control-sm" placeholder="搜索帖子..." aria-describedby="button-addon2"> 
+              <input type="text" name="value" class="form-control form-control-sm" placeholder="搜索帖子..." aria-describedby="button-addon2">
               <button class="btn btn-sm btn-outline-secondary" type="submit">搜索</button>
             </div>
           </form>
@@ -41,15 +41,26 @@
         <% if(locals.user){ %>
 
         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-          <span><%= locals.user.account || 'undefined' %></span> <img src="<%= locals.user.avatar || '/assets/default_avatar.png' %>" alt="<%= locals.user.account %>" width="32" height="32" class="rounded-circle">
+          <img src="<%= locals.user.avatar || '/assets/default_avatar.png' %>" alt="<%= locals.user.account %>" width="32" height="32" class="rounded-circle">
+          <span><%= locals.user.account || 'undefined' %></span>
+          <% if(locals.notify_count){ %>
+          <span class="badge text-bg-danger"><%= locals.notify_count %></span>
+          <% } %>
         </a>
+
         <ul class="dropdown-menu text-small">
           <li><a class="dropdown-item" href="/u/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
           <li><a class="dropdown-item" href="/user/settings"><%= i18n('_dict_.personal_setting') %></a></li>
           <li>
             <hr class="dropdown-divider">
           </li>
-          <li><a class="dropdown-item" href="/user/notifies">通知</a></li>
+          <li>
+            <a class="dropdown-item" href="/user/notifies">通知
+              <% if(locals.notify_count){ %>
+              <span class="badge text-bg-danger"><%= locals.notify_count %></span>
+              <% } %>
+            </a>
+          </li>
           <li><a class="dropdown-item" href="/user/collects">收藏</a></li>
           <li><a class="dropdown-item" href="/user/drafts"><%= i18n('_dict_.draft') %></a></li>
           <li>

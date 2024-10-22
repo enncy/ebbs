@@ -9,7 +9,7 @@ export const unit = {
      */
     timeFrom(t: number) {
         if(t <= 0){
-            return '刚刚'
+            return '未知'
         }
         return dayjs(t).locale('zh-cn').fromNow();
     },

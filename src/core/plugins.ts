@@ -11,7 +11,7 @@ import { i18n } from "../defaults-plugins/i18n";
 import defaultsDeep from 'lodash/defaultsDeep';
 import winston, { Logger } from 'winston';
 import { ServerResponse } from "http";
- 
+
 export type PluginExport<Sessions extends Record<string, any> = any, Settings extends Record<string, any> = any, Apis extends Record<string, any> = any> = {
     id: string;
     name: string;
@@ -308,6 +308,9 @@ export abstract class Plugin<
             for (const key in validators) {
                 const value = data[key]
                 const validator = validators[key]
+                if (!value && validator.required === false) {
+                    continue
+                }
                 let custom_error_msg = ''
                 const onInvalid = validator.onInvalid || (async (req, res) => {
                     const err = custom_error_msg || validator.error_of_invalid || i18n('_internal_.plugin.validator.invalid', { param_name: validator.name || key })
@@ -334,7 +337,7 @@ export abstract class Plugin<
                 if (validator.type === 'string' && typeof value !== 'string') {
                     return onTypeError(req, res)
                 } else {
-                    if (validator.required && !value) {
+                    if (!value) {
                         return onInvalid(req, res)
                     }
                     if ((validator.min_length && value.length < validator.min_length) || (validator.max_length && value.length > validator.max_length)) {
@@ -349,7 +352,7 @@ export abstract class Plugin<
                 if (validator.type === 'number' && typeof value !== 'number') {
                     return onTypeError(req, res)
                 } else {
-                    if (validator.required && value === undefined) {
+                    if (!value) {
                         return onInvalid(req, res)
                     }
                     if ((validator.min && value < validator.min) || (validator.max && value > validator.max)) {

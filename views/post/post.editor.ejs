@@ -25,7 +25,7 @@
 
       <%- include('/views/components/error.alert.ejs') %>
 
-      <form method="post" action="/post/editor?category_uid=<%= locals.query.category_uid %>">
+      <form id="post-page-form" method="post" action="/post/editor?category_uid=<%= locals.query.category_uid %>">
 
         <input name="category_uid" type="hidden" value="<%= locals.query.category_uid %>">
         <input name="pid" type="hidden" value="<%= locals.query.pid %>">
@@ -56,7 +56,7 @@
               <%= i18n('_model_.post.draft') %> <input type="checkbox" name="draft" class="form-check-input" id="draft" <%= (locals.body?.draft || defaults.draft) ? 'checked': '' %>>
             </div>
           </div>
-          <div class="flex-auto"> <button type="button" onclick="JoditUtils.submitPost('form')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button></div>
+          <div class="flex-auto"> <button type="button" onclick="JoditUtils.submitPost('#post-page-form')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button></div>
         </div>
 
 

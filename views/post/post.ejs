@@ -28,11 +28,11 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
   .breadcrumbs {
     display: flex
   }
- 
+
   .breadcrumb a {
     color: #1b6091 !important;
   }
- 
+
 
   .post .title {
     font-size: 22px;
@@ -133,17 +133,20 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
     margin-left: 6px;
   }
 
-  .tag{
+  .tag {
     padding: 2px 4px;
     border: 1px solid #eaeaea;
     border-radius: 4px;
   }
 
-  .tag-list { 
+  .tag-list {
     font-size: 12px;
   }
 
 
+  .show-on-large-content {
+    display: none;
+  }
 
   @media screen and (max-width: 742px) {
 
@@ -193,6 +196,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
     .actions {
       padding: 0px 6px;
     }
+
   }
 </style>
 
@@ -282,7 +286,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
               <div class="mt-1">
                 <% if(post.tags?.length){ %>
-                <div class="tag-list text-secondary"> 
+                <div class="tag-list text-secondary">
                   <% for(const tag of post.tags){ %>
                   <span class="tag  me-1">#<%= tag %></span>
                   <% } %>
@@ -290,9 +294,11 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                 <% } %>
               </div>
 
-              <hr class="mt-2 mb-2" /> 
+              <hr class="mt-2 mb-2" />
 
+              <!-- 操作区域 -->
               <%- include('./post.actions.ejs') %>
+
               <hr class="mb-2 mt-2 secondary">
 
               <div class="post-content pt-1 pb-1">
@@ -300,12 +306,6 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                   <div class="h-auto col-12">
                     <div class="leap post-html"><%- post.html %></div>
                   </div>
-                  <!-- 操作区域 -->
-                  <div class="pb-1 col-12">
-                    <hr class="mb-2 mt-2 secondary">
-                    <%- include('./post.actions.ejs') %>
-                  </div>
-
                 </div>
               </div>
             </div>
@@ -390,7 +390,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
               <% if(locals.user === undefined){ %>
               <div class="invalid-editor">登录后才能发表评论，<a href="/passport/login" target="_blank">去登录</a></div>
               <% } %>
-              <form class="p-0 m-0" id="editor" method="post" action="/post/comment">
+              <form class="p-0 m-0" id="post-page-editor" method="post" action="/post/comment">
                 <input name="post_uid" type="hidden" value="<%= locals.post.uid %>">
                 <input name="parent_uid" type="hidden" value="">
                 <input name="category_uid" type="hidden" value="<%= locals.post.category_uid %>">
@@ -401,7 +401,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
                 <% if(locals.user ){ %>
                 <div class="text-end">
-                  <button type="button" onclick="JoditUtils.submitComment('#editor')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button>
+                  <button type="button" onclick="JoditUtils.submitComment('#post-page-editor')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button>
                 </div>
                 <% } %>
               </form>
@@ -470,8 +470,8 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
         if (res != 'OK') {
           return;
         }
-        const el = document.querySelector(`.post-content .collect-button`)
-        const a = document.querySelector(`.post-content .collect-action`)
+        const el = document.querySelector(`.main-content .collect-button`)
+        const a = document.querySelector(`.main-content .collect-action`)
 
         if (action === 'collect') {
           el.textContent = '已收藏';

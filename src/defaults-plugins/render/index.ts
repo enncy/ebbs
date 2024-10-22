@@ -7,8 +7,6 @@ import { i18n } from "../i18n";
 import fs from 'fs';
 import { PassportPlugin, permission } from "../passport";
 import dayjs from 'dayjs';
-import { UploadedFile } from "express-fileupload";
-import sharp from 'sharp';
 import { PostCreateParams, PostDocument, PostModel, PostUpdateParams } from "src/models/post";
 import { ContentUtils } from "src/utils/content";
 import { CommentCreateParams, CommentDocument, CommentModel } from "src/models/comment";
@@ -20,6 +18,7 @@ import { Document } from "mongoose";
 import { statistic } from "./statistic";
 import { notify } from "./notify";
 import { Request, Response } from "express";
+import { UserAttachment } from "src/utils/file";
 
 export class UserPreCreatePostEvent extends CancellableEvent {
     constructor(public user: UserDocument, public params: PostCreateParams) {
@@ -119,7 +118,7 @@ definePlugin({
         render: async (req) => {
             const id = req.query.id?.toString().trim()
             const page = req.query.p?.toString().trim() || '1'
-            const sort = req.query.sort?.toString().trim() || 'default' 
+            const sort = req.query.sort?.toString().trim() || 'default'
             if (hasBlankParams(id, page)) {
                 return
             }
@@ -256,7 +255,9 @@ const PostPlugin = definePlugin({
 
 
         try {
-            const { url } = await addAttachment(user.account, file) || {}
+            const date = dayjs().format('YYYY-MM-DD')
+            const ua = UserAttachment.of(user, date)
+            const { url } = await ua.addImage(file) || {}
             if (!url) {
                 throw new Error(i18n('post.upload.file_error', { error_message: 'add attachment failed' }))
             }
@@ -314,7 +315,7 @@ const PostPlugin = definePlugin({
             return plugin.sendError(req, res, 400)
         }
         await Promise.all(deleted_images_array.map(path => {
-            return deleteAttachment(path)
+            return UserAttachment.deleteAttachment(path)
         }))
 
         // 敏感词检测
@@ -428,13 +429,15 @@ const PostPlugin = definePlugin({
 
         const user = PassportPlugin.sessions.get(req, 'user')!
 
+
+
         // 删除未使用的图片
         const deleted_images_array = JSON.parse(deleted_images)
         if (Array.isArray(deleted_images_array) === false) {
             return plugin.sendError(req, res, 400)
         }
         await Promise.all(deleted_images_array.map(path => {
-            return deleteAttachment(path)
+            return UserAttachment.deleteAttachment(path)
         }))
 
         const draft_value = draft === 'on'
@@ -559,117 +562,6 @@ const PostPlugin = definePlugin({
         }
     })
 })
-
-
-
-export function addAttachment(account: string, file: UploadedFile) {
-    return new Promise<{ url: string, filepath: string }>(async (r, reject) => {
-        const date = dayjs().format('YYYY-MM-DD')
-        const dir = join(global_config.post.upload.dest_dir, account, date)
-        const filepath = join(dir, file.name)
-        // 基础路径
-        const base = global_config.post.upload.dest_dir.replace(resolve('.'), '').replace(/\\/g, '/')
-
-        if (fs.existsSync(filepath)) {
-            return r({
-                url: `${base}/${account}/${date}/${file.name}`,
-                filepath: filepath
-            })
-        }
-
-        // 保存文件
-        if (fs.existsSync(dir) === false) {
-            await fs.promises.mkdir(dir, { recursive: true })
-        }
-
-        const { total_count, total_size } = await calculateAllFileSizeAndCount(account)
-
-        // 计算用户文件数量，超过则不允许上传
-        if (total_count >= global_config.post.upload.user_max_file_count) {
-            return reject(new Error(i18n('post.upload.user_file_count_limit_note', { max: global_config.post.upload.user_max_memorize_use + 'MB' }))
-            )
-        }
-
-        // 计算用户文件大小，超过则不允许上传 
-        if (total_size + file.size > global_config.post.upload.user_max_memorize_use * 1024 * 1024) {
-            return reject(new Error(i18n('post.upload.user_memory_limit_note', { max: global_config.post.upload.user_max_memorize_use + 'MB' }))
-            )
-        }
-
-        // 图片质量规则
-        const quality = global_config.post.upload.image_quality_rules.find(rule => {
-            return file.size > rule[0] * 1024 * 1024
-        })?.[1]
-
-
-        // 压缩图片
-        sharp(file.tempFilePath)
-            .on('error', reject)
-            .resize({
-                width: global_config.post.upload.image_max_width,
-                height: global_config.post.upload.image_max_height,
-                fit: sharp.fit.inside,
-                withoutEnlargement: true,
-            })
-            .jpeg({ quality: quality || 20 })
-            .png({ quality: quality || 20 })
-            .toFile(filepath, (err, info) => {
-                if (err) {
-                    reject(err)
-                } else {
-                    r({
-                        url: `${base}/${account}/${date}/${file.name}`,
-                        filepath: filepath
-                    })
-                }
-            })
-    });
-}
-
-export async function deleteAttachment(filepath: string) {
-    if (filepath.startsWith('/')) {
-        filepath = filepath.substring(1)
-    }
-    const file = resolve(filepath)
-    if (fs.existsSync(file)) {
-        await fs.promises.unlink(file)
-    }
-}
-
-
-
-
-// 计算所有上传文件的大小 
-// 递归计算文件夹大小和数量
-export async function calculateAllFileSizeAndCount(account: string): Promise<{ total_size: number, total_count: number }> {
-    const dir = join(global_config.post.upload.dest_dir, account)
-    if (fs.existsSync(dir) === false) {
-        return { total_size: 0, total_count: 0 }
-    }
-
-    const files = [dir]
-    let total_size = 0;
-    let total_count = 0;
-    while (files.length > 0) {
-        const file = files.shift()
-        if (!file) {
-            continue
-        }
-        const stats = await fs.promises
-            .stat(file)
-            .catch(() => null)
-        if (!stats) {
-            continue
-        }
-        if (stats.isFile()) {
-            total_size += stats.size
-            total_count++
-        } else {
-            files.push(...await fs.promises.readdir(file))
-        }
-    }
-    return { total_size, total_count }
-}
 
 export function sendCommentRedirect(req: Request, res: Response, opts: { comment_short_id?: string, uid?: string }) {
     if (!opts.comment_short_id && !opts.uid) {
