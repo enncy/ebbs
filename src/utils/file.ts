@@ -42,6 +42,11 @@ export class UserAttachment {
                 } catch (e) {
                     return reject(e)
                 }
+            } else {
+                // 保存文件
+                if (fs.existsSync(dir) === false) {
+                    await fs.promises.mkdir(dir, { recursive: true })
+                }
             }
 
 
