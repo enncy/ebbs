@@ -122,7 +122,7 @@ const href_template = `/u/${account.account}?show=${ locals.query.show || 'index
               <% if(account.nickname){ %>
               <div><b><%= account.nickname %></b> (<%= account.account %>)</div>
               <% }else{ %>
-              <div><%= account.nickname %></div>
+              <div><%= account.account %></div>
               <% } %>
               <div><%= account.profile  || '暂无' %></div>
             </div>
