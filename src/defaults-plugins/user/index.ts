@@ -303,6 +303,10 @@ definePlugin({
         if (hasBlankParams(target_account)) {
             return plugin.sendError(req, res, 400)
         }
+        // 自己无法关注自己
+        if (user.account === target_account) {
+            return plugin.sendError(req, res, 400, '不能关注自己')
+        }
         const target = await UserDocument.findOne({ account: target_account })
         if (!target) {
             return plugin.sendError(req, res, 404)
@@ -315,7 +319,7 @@ definePlugin({
         e.data = e.data || {}
         const user = PassportPlugin.sessions.get(e.req, 'user')
         if (user) {
-            e.data.notify_count = await NotifyDocument.countUnread(user.uid) 
+            e.data.notify_count = await NotifyDocument.countUnread(user.uid)
         }
     })
 

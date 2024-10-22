@@ -1,0 +1,173 @@
+<% 
+    // 排序
+    locals.categories = locals.categories.sort((a, b) => a.priority - b.priority);  
+%>
+
+
+<div id="group-models">
+  <%- include('/views/components/dialog.start.ejs', { id:'createGroupModal', title: i18n('admin.form.category_group.create_new') })  %>
+  <form method="post" action="/admin/create-category-group">
+    <%= i18n('_model_.category_group.name') %> : <input type="text" name="group_name" class="form-control" required value="<%= locals.body?.group_name %>">
+    <%= i18n('_model_.category_group.priority') %> : <input type="number" name="group_priority" class="form-control" required value="<%= locals.body?.group_priority %>">
+    <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+  </form>
+  <%- include('/views/components/dialog.end.ejs')  %>
+
+
+
+  <%- include('/views/components/dialog.start.ejs', { id:'updateGroupModal', title: i18n('admin.form.category_group.update') })  %>
+  <form method="post" action="/admin/update-category-group">
+    <input type="hidden" name="group_uid" class="form-control" required value="<%= locals.body?.group_uid %>">
+    <%= i18n('_model_.category_group.name') %> : <input type="text" name="group_name" class="form-control" required value="<%= locals.body?.group_name %>">
+    <%= i18n('_model_.category_group.priority') %> : <input type="number" name="group_priority" class="form-control" required value="<%= locals.body?.group_priority %>">
+    <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+  </form>
+  <%- include('/views/components/dialog.end.ejs')  %>
+
+</div>
+
+
+<div id="models">
+  <%- include('/views/components/dialog.start.ejs', { id:'createModal', title: i18n('admin.form.category.create_new') })  %>
+  <form method="post" action="/admin/create-category">
+    <%= i18n('_model_.category.name') %> : <input type="text" name="name" class="form-control" required value="<%= locals.body?.name %>">
+    <%= i18n('_model_.category.description') %> : <input type="text" name="description" class="form-control" required value="<%= locals.body?.description %>">
+    <%= i18n('_model_.category.priority') %> : <input type="number" name="priority" class="form-control" required value="<%= locals.body?.priority %>">
+    <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+  </form>
+  <%- include('/views/components/dialog.end.ejs')  %>
+
+
+
+  <%- include('/views/components/dialog.start.ejs', { id:'updateModal', title: i18n('admin.form.category.update') })  %>
+  <form method="post" action="/admin/update-category">
+    <input type="hidden" name="uid" class="form-control" required value="<%= locals.body?.uid %>">
+    <%= i18n('_model_.category.name') %> : <input type="text" name="name" class="form-control" required value="<%= locals.body?.name %>">
+    <%= i18n('_model_.category.description') %> : <input type="text" name="description" class="form-control" required value="<%= locals.body?.description %>">
+    <%= i18n('_model_.category.priority') %> : <input type="number" name="priority" class="form-control" required value="<%= locals.body?.priority %>">
+    <%= i18n('_model_.category.icon') %> : <input type="text" name="icon" class="form-control" placeholder="https://xxxx" value="<%= locals.body?.icon %>">
+    <%= i18n('_model_.category_group.name') %> : <input type="text" name="add_to_group" class="form-control" value="<%= locals.body?.add_to_group %>">
+    <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+  </form>
+  <%- include('/views/components/dialog.end.ejs')  %>
+</div>
+
+
+
+<!-- 新建分区 -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createGroupModal"><%= i18n('admin.form.category_group.create_new') %>+</button>
+
+<hr>
+
+<div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col"><%= i18n('_model_.category.name') %></th>
+        <th scope="col"><%= i18n('_model_.category.priority') %></th>
+        <th scope="col"><%= i18n('_dict_.cations') %></th>
+      </tr>
+    </thead>
+
+    <% if (locals.category_groups?.length) { %>
+    <tbody>
+      <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
+      <% const item = locals.category_groups[i]; %>
+      <tr>
+        <td><%= item.name %></td>
+        <td><%= item.priority %></td>
+        <td class="text-end d-flex flex-wrap">
+          <span onclick="updateGroupModalValue('<%=i%>')">
+            <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateGroupModal"><%= i18n('_dict_.modify') %></button>
+          </span>
+          <a href="/admin/remove-category-group?uid=<%= item.uid %>">
+            <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
+          </a>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+    <% } else { %>
+    <tbody>
+      <tr>
+        <td colspan="4" class="text-center text-secondary"><%= i18n('_dict_.no_data') %></td>
+      </tr>
+    </tbody>
+    <% } %>
+  </table>
+</div>
+
+
+
+<!-- 新建分区 -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal"><%= i18n('admin.form.category.create_new') %>+</button>
+
+<hr>
+
+<div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col"><%= i18n('_model_.category.name') %></th>
+        <th scope="col"><%= i18n('_model_.category.description') %></th>
+        <th scope="col"><%= i18n('_model_.category.priority') %></th>
+        <th scope="col"><%= i18n('_model_.category.icon') %></th>
+        <th scope="col"><%= i18n('_model_.category_group.name') %></th>
+        <th scope="col"><%= i18n('_dict_.cations') %></th>
+      </tr>
+    </thead>
+
+    <% if (locals.categories?.length) { %>
+    <tbody>
+      <% for (let i = 0 ;i < locals.categories.length; i++) {  %>
+      <% const item = locals.categories[i]; %>
+      <tr>
+        <td><%= item.name %></td>
+        <td><%= item.description %></td>
+        <td><%= item.priority %></td>
+        <td><%= item.icon || '无' %></td>
+        <td><%= item.group_name || '无' %></td>
+        <td class="text-end d-flex flex-wrap">
+          <span onclick="updateModalValue('<%=i%>')">
+            <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateModal"><%= i18n('_dict_.modify') %></button>
+          </span>
+          <a href="/admin/remove-category?uid=<%= item.uid %>">
+            <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
+          </a>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+    <% } else { %>
+    <tbody>
+      <tr>
+        <td colspan="4" class="text-center text-secondary"><%= i18n('_dict_.no_data') %></td>
+      </tr>
+    </tbody>
+    <% } %>
+  </table>
+</div>
+
+
+<script>
+  const categories = JSON.parse(decodeURI(`<%-encodeURI(JSON.stringify(locals.categories))%>`));
+  const category_groups = JSON.parse(decodeURI(`<%-encodeURI(JSON.stringify(locals.category_groups))%>`));
+
+  function updateModalValue(i) {
+    const category = categories[i];
+    var form = document.querySelector('#updateModal');
+    form.querySelector('input[name="uid"]').value = category.uid;
+    form.querySelector('input[name="name"]').value = category.name;
+    form.querySelector('input[name="description"]').value = category.description;
+    form.querySelector('input[name="priority"]').value = category.priority;
+    form.querySelector('input[name="icon"]').value = category.icon;
+  }
+
+  function updateGroupModalValue(i) {
+    const category_group = category_groups[i];
+    var form = document.querySelector('#updateGroupModal');
+    form.querySelector('input[name="group_uid"]').value = category_group.uid;
+    form.querySelector('input[name="group_name"]').value = category_group.name;
+    form.querySelector('input[name="group_priority"]').value = category_group.priority;
+  }
+</script>

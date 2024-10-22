@@ -1,0 +1,29 @@
+<%- include('./index.start.ejs') %>
+
+
+<div class="mb-2">
+  <form action="/admin/user-manager" method="get" class="mb-0">
+    <div class="input-group ">
+      <input type="text" name="search" class="form-control form-control-sm" placeholder="搜索用户..." aria-describedby="button-addon2">
+      <button class="btn btn-sm btn-outline-secondary" type="submit">搜索</button>
+    </div>
+  </form>
+</div>
+
+<div class="ps-1 mb-2">
+  <small>共 <%= users.length %> 个用户</small>
+</div>
+
+<div class="mb-2">
+  <% for(const user of users){ %>
+  <%- include('./components/user.list.ejs', {user}) %>
+  <% } %>
+</div>
+
+<div>
+  
+  <%- include('/views/components/pagination.ejs', {total_count: locals.total_count, current: locals.query.page || '1', href_template: `/admin/user-manager?page={{page}}`  }) %>
+
+</div>
+
+<%- include('./index.end.ejs') %>

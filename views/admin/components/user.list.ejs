@@ -1,0 +1,56 @@
+<style>
+  .user-list-item:hover {
+    background-color: #f7f7f7;
+  }
+</style>
+
+<%- include('/views/components/dialog.start.ejs', { id:'managerPermissionsModal-'+ user.account, title: '管理权限' })  %>
+<form method="post" action="/admin/user-manager">
+  <input type="hidden" name="uid" value="<%= user.uid %>">
+  <input type="hidden" name="action" value="permission">
+
+  <textarea name="permissions" class="w-100"><%= user.permissions.join('\n') %></textarea>
+  <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+</form>
+<%- include('/views/components/dialog.end.ejs')  %>
+
+
+
+<div class=" rounded border p-2 mb-2 user-list-item">
+  <div class="d-flex align-items-center">
+    <div class="flex-fill d-flex gap-2 align-items-center">
+      <span>
+        <img src="<%= user.avatar || '/assets/default_avatar.png' %>" alt="<%= user.account %>" width="48" height="48" class="rounded-circle border">
+      </span>
+      <span>
+        <span><%= user.account + (user.nickname ? `(${user.nickname})` : '') %></span>
+      </span>
+
+      <span>
+        <% if(user.permissions.includes('admin')){ %>
+        <span class="badge text-bg-primary">管理员</span>
+        <% } %>
+      </span>
+    </div>
+
+    <div class="flex-auto">
+      <a href="/u/<%= user.account %>" target="_blank"><button type="button" class="btn btn-sm btn-primary">主页</button></a>
+      <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#managerPermissionsModal-<%= user.account %>">管理权限</button>
+      <form action="/admin/user-manager" method="post" class=" d-inline">
+        <input type="hidden" name="uid" value="<%= user.uid %>">
+
+        <% if(user.banned){ %>
+        <button type="submit" value="unban" name="action" class="btn btn-sm btn-outline-primary">解封</button>
+        <% }else{ %>
+        <button type="submit" value="ban" name="action" class="btn btn-sm btn-danger">封禁</button>
+        <% } %>
+
+        <% if(user.deleted){ %>
+        <button type="submit" value="recover" name="action" class="btn btn-sm btn-outline-primary">恢复</button>
+        <% }else{ %>
+        <button type="submit" value="remove" name="action" class="btn btn-sm btn-danger">移除</button>
+        <% } %>
+      </form>
+    </div>
+  </div>
+</div>

@@ -33,5 +33,10 @@ export function bindEJSBaseVariables(req: Request, data: any) {
     Reflect.set(data, 'body', req.body)
     Reflect.set(data, 'params', req.params)
     Reflect.set(data, 'query', req.query)
+    Reflect.set(data, 'req', {
+        method: req.method,
+        url: req.url,
+        path: req.path,
+    })
 }
 

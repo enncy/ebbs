@@ -1,16 +1,36 @@
+<%
+
+const sidebars = [
+  {
+    name: 'category',
+    path: '/admin/index',
+    lang: 'admin.sidebar.category' 
+  }, 
+  {
+    name: 'user_manager',
+    path: '/admin/user-manager',
+    lang: 'admin.sidebar.user_manager' 
+  }
+]
+
+const active = sidebars.find(s => s.path === locals.req.path)?.name || 'category'
+
+%>
+
 <style>
-  
-  .list-group-item[active] a {
+  .list-group-item[active]  {
     color: black !important;
     font-weight: bold;
   }
 
-  .list-group-item a {
+  .list-group-item.a {
     color: black !important;
   }
 </style>
-<ul class="list-group">
-  <% for (const element of ['category:/admin/index', 'general_setting:/admin/general_setting', 'user_manager:/admin/user_manager']) { %>
-  <li class="list-group-item cursor-pointer" <%= active === element.split(':')[0] ? 'active' : '' %>> <a class="text-decoration-none " href="<%=  element.split(':')[1] %>"><%= i18n('admin.sidebar.' + element.split(':')[0]) %></a> </li>
+<div class="list-group">
+  <% for (const element of sidebars) { %>
+    <a class="list-group-item  text-decoration-none " <%= active === element.name ? 'active' : '' %>  href="<%= element.path %>">
+      <div class="cursor-pointer">   <%= i18n(element.lang) %>  </div>
+    </a>
   <%  } %>
-</ul>
+</div>

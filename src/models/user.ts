@@ -1,6 +1,7 @@
 import { defineModel } from "src/core/plugins"
 import { uuid } from "./utils"
-import { SignUtils } from "src/utils" 
+import { SignUtils } from "src/utils"
+import { FilterQuery } from "mongoose"
 
 export class UserDocument {
     uid: string
@@ -14,6 +15,7 @@ export class UserDocument {
     profile_background: string
     permissions: string[]
     banned: boolean
+    deleted: boolean
     register_at: number
     register_ip: string
     last_login_at: number
@@ -28,7 +30,7 @@ export class UserDocument {
     public static async create(account: string, email: string, passport: string, ip: string) {
         const now = Date.now()
         const salt = uuid()
-        const signed_password = SignUtils.sign({ passport, salt })  
+        const signed_password = SignUtils.sign({ passport, salt })
         return await UserModel.create({
             uid: uuid(),
             account: account,
@@ -41,6 +43,7 @@ export class UserDocument {
             profile_background: '',
             permissions: [],
             banned: false,
+            deleted: false,
             register_at: now,
             register_ip: ip,
             last_login_at: now,
@@ -97,6 +100,39 @@ export class UserDocument {
         })
     }
 
+
+    public static list(filter: FilterQuery<UserDocument>, pagination: { page: number, size: number }) {
+        return UserModel.find(filter).skip((pagination.page - 1) * pagination.size).limit(pagination.size)
+    }
+
+
+    public static count(filter: FilterQuery<UserDocument>) {
+        return UserModel.countDocuments(filter)
+    }
+
+    public static ban(uid: string) {
+        return UserModel.updateOne({ uid }, { banned: true })
+    }
+
+    public static unban(uid: string) {
+        return UserModel.updateOne({ uid }, { banned: false })
+    }
+
+    public static remove(uid: string) {
+        return UserModel.updateOne({ uid }, { deleted: true })
+    }
+
+    public static recover(uid: string) {
+        return UserModel.updateOne({ uid }, { deleted: false })
+    }
+
+    public static permissions(uid: string, permissions: string[]) {
+        return UserModel.updateOne({
+            uid
+        }, {
+            permissions
+        })
+    }
 }
 export const UserModel = defineModel<UserDocument>('User',
     {
@@ -111,6 +147,7 @@ export const UserModel = defineModel<UserDocument>('User',
         avatar: { type: String, default: '' },
         permissions: { type: [String], default: [] },
         banned: { type: Boolean, default: false },
+        deleted: { type: Boolean, default: false },
         register_at: { type: Number, default: Date.now },
         register_ip: { type: String, default: '' },
         last_login_at: { type: Number, default: Date.now },
