@@ -306,7 +306,7 @@ export abstract class Plugin<
         return (req, res, next) => {
             const data = data_provider(req)
             for (const key in validators) {
-                const value = data[key]
+                let value = data[key]
                 const validator = validators[key]
                 if (!value && validator.required === false) {
                     continue
@@ -337,6 +337,7 @@ export abstract class Plugin<
                 if (validator.type === 'string' && typeof value !== 'string') {
                     return onTypeError(req, res)
                 } else {
+                    value = value.trim()
                     if (!value) {
                         return onInvalid(req, res)
                     }

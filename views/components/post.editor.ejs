@@ -73,17 +73,14 @@
       const image_urls = Array.from(images).map(image => image.src)
       // 判断文本
       const form_data = new FormData(form_el)
-      const text = document.querySelector('.jodit-editor #text').value;
+      const text = document.querySelector('.jodit-editor #text').value.trim();
       if (text.length < content_min_length) {
         return jodit.message.message(`<%= i18n('post.form.content_too_short', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
       }
       if (text.length > content_max_length) {
         return jodit.message.message(`<%= i18n('post.form.content_too_long', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
-
-
       }
 
-      console.log(Array.from(form_data.keys()))
 
       // 判断标签
       const tags = form_data.get('tags').toString().split(' ').filter(tag => tag.trim())
@@ -103,13 +100,12 @@
 
       // 判断文本
       const form_data = new FormData(form_el)
-      const text = document.querySelector('.jodit-editor #text').value;
+      const text = document.querySelector('.jodit-editor #text').value.trim();
       if (text.length < content_min_length) {
         return jodit.message.message(`<%= i18n('post.form.content_too_short', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
       }
       if (text.length > content_max_length) {
         return jodit.message.message(`<%= i18n('post.form.content_too_long', {min: locals.content_min_length ?? 10 }) %>`, 'error', error_message_duration);
-
       }
 
       // 找出已删除的图片
