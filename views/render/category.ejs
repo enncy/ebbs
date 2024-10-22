@@ -10,8 +10,8 @@ const href_template = '/category?id=' + locals.query.id + '&p={{page}}';
 
 <head>
   <%- include('/views/header') %>
-  <title><%=locals.settings.name%></title>
-
+  <title><%=locals.settings.name%> - <%= category.name %></title>
+  
   <style>
     .container {
       background-color: white;

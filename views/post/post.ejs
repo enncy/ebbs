@@ -59,8 +59,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
   }
 
   .user-account {
-    width: 160px;
-    font-size: 1.2rem;
+    width: 160px; 
     font-weight: bold;
   }
 
@@ -324,12 +323,9 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                   <img class="user-avatar" src="<%= comment.user.avatar || '/assets/default_avatar.png' %>" alt="<%= comment.user.account %>">
                 </div>
                 <a class="flex-fill text-decoration-none" href="/u/<%=comment.user.account  %>" target="_blank">
-                  <div class="text-dark  user-account"><%= comment.user.account %></div>
+                  <div class="text-dark  user-account"><%= comment.user.nickname || comment.user.account %></div>
                 </a>
-                <div class="pe-3 pe-lg-0 d-flex d-lg-block gap-3">
-                  <% if(comment.user.nickname?.trim()){ %>
-                  <div class="d-inline-block d-lg-block"><small><%= comment.user.nickname  %></small></div>
-                  <% } %>
+                <div class="pe-3 pe-lg-0 d-flex d-lg-block gap-3"> 
                   <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= unit.count(post.user.statistics.posts) %></small></div>
                   <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= unit.count(post.user.statistics.fans) %></small></div>
                 </div>
