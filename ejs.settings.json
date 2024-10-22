@@ -9,11 +9,8 @@
         {
             "type": "link",
             "text": "EBBS",
-            "href": "/"
-        }, 
-        {
-            "type": "html",
-            "content": "<a href='/admin/index'>Admin</a>"
+            "href": "/",
+            "class": ""
         }
     ],
     "editor": {
