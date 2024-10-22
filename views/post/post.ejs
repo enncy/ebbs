@@ -71,7 +71,10 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
   .post-content img,
   .post-content video,
-  .post-content iframe {
+  .post-content iframe,
+  .comment-html img,
+  .comment-html video,
+  .comment-html iframe {
     max-width: 100% !important;
   }
 
@@ -336,7 +339,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
               </div>
             </div>
 
-            <div data-uid="<%= comment.uid %>" class="p-lg-0 p-1 flex-fill d-flex flex-wrap overflow-auto" style="align-content: space-between;">
+            <div data-uid="<%= comment.uid %>" class="p-lg-0 p-1 flex-fill d-flex flex-wrap " style="align-content: space-between;">
               <div class="pt-3 pb-1 h-auto col-12">
                 <!-- 回复内容 -->
                 <% if(comment.parent){ %>
