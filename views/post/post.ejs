@@ -260,13 +260,10 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                 </div>
 
                 <a class="flex-fill text-decoration-none" href="/u/<%=post.user.account  %>" target="_blank">
-                  <div class="text-dark  user-account"><%= post.user.account %></div>
+                  <div class="text-dark  user-account"><%= post.user.nickname || post.user.account %></div>
                 </a>
 
-                <div class=" d-flex d-lg-block gap-3">
-                  <% if(post.user.nickname?.trim()){ %>
-                  <div class="d-inline-block d-lg-block"><small><%= post.user.nickname  %></small></div>
-                  <% } %>
+                <div class=" d-flex d-lg-block gap-3"> 
                   <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= unit.count(post.user.statistics.posts) %></small></div>
                   <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= unit.count(post.user.statistics.fans)  %></small></div>
                 </div>
