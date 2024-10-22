@@ -1,0 +1,20 @@
+{
+	"apps": [
+		{
+			"name": "ebbs", 
+			"script": "./lib/src/app.js",
+			"log_date_format": "YYYY-MM-DD HH:mm:ss",
+			"out_file": "./.pm2/console.log",
+			"error_file": "./.pm2/error.log",
+			"instances": "1",
+			"min_uptime": "200s",
+			"max_restarts": 10,
+			"watch": false,
+			"merge_logs": false,
+			"exec_interpreter": "node",
+			"exec_mode": "cluster_mode",
+			"autorestart": true,
+			"vizion": false
+		}
+	]
+}

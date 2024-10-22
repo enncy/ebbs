@@ -6,7 +6,10 @@
   "scripts": {
     "build": "tsc && tsc-alias -p tsconfig.json",
     "build:lang": "ts-node ./scripts/build.lang.ts",
-    "dev": "npm run build && npm run build:lang && node ./lib/src/app.js"
+    "dev": "npm run build && npm run build:lang && node ./lib/src/app.js",
+    "start": "npm run build && npm run build:lang && pm2 start processes.json",
+    "stop": "pm2 start processes.json",
+    "restart": "npm run build &&  npm run build:lang && pm2 restart processes.json"
   },
   "repository": {
     "type": "git",

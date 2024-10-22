@@ -6,3 +6,4 @@ plugins/*
 logs/*
 public/*
 .env*
+.pm2/
