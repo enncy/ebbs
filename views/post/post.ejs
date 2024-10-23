@@ -419,8 +419,8 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
     const resize = function() {
       const invalidEditor = el('.invalid-editor');
       if (invalidEditor) {
-        invalidEditor.style.width = el('#editor').clientWidth + 'px';
-        invalidEditor.style.height = el('#editor').clientHeight + 'px';
+        invalidEditor.style.width = el('#post-page-editor').clientWidth + 'px';
+        invalidEditor.style.height = el('#post-page-editor').clientHeight + 'px';
       }
     }
     window.onload = () => {
