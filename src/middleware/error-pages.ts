@@ -11,6 +11,7 @@ export function errorPages(context: PluginContext): RequestHandler {
             return
         }
         if (['.png', '.jpg', '.map'].some(s => req.path.endsWith(s))) {
+            res.statusCode = 404
             return res.sendStatus(res.statusCode)
         }
         if (req.path === '/error') {

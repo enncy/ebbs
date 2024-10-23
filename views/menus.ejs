@@ -5,7 +5,7 @@
     z-index: 999;
   }
 
-  .dropdown-menu[data-bs-popper]{
+  .dropdown-menu[data-bs-popper] {
     right: 0;
     left: unset;
   }
@@ -20,7 +20,7 @@
           <% for(const menu of locals.settings.menus){ %>
 
           <% if(menu.type === 'html'){ %>
-          <li class="<%= menu.class %>"><%= menu.html %></li>
+          <li class="<%= menu.class %>"><%- menu.html %></li>
           <% } %>
 
           <% if(menu.type === 'link'){ %>
@@ -94,12 +94,17 @@
     <div class=" d-md-none d-block">
       <nav class="navbar ">
         <div class="container p-0">
- 
-          <div>
+
+          <div class="d-inline-flex align-items-center ">
             <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand" href="/"><%=locals.settings.name%></a> 
+            <div class="d-inline-flex align-items-center gap-2">
+              <% if(locals.settings?.meta?.icon){ %>
+              <img src="<%= locals.settings.meta.icon %>" width="32" />
+              <% } %>
+              <a class="navbar-brand" href="/"><%=locals.settings.name%></a>
+            </div>
           </div>
 
           <% if(locals.user){ %>
@@ -145,14 +150,14 @@
           <% } %>
 
           <div class="offcanvas offcanvas-start " style="width: 300px" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
- 
+
             <div class="offcanvas-body">
 
               <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                 <% for(const menu of locals.settings.menus){ %>
 
                 <% if(menu.type === 'html'){ %>
-                <li class="nav-item"><%= menu.html %></li>
+                <li class="nav-item <%= menu.class %>"><%- menu.html %></li>
                 <% } %>
 
                 <% if(menu.type === 'link'){ %>

@@ -3,12 +3,13 @@
     "meta": {
         "title": "BBS",
         "description": "BBS description",
-        "keywords": "bss"
+        "keywords": "bss",
+        "icon": "/public/assets/favicon.png"
     },
     "menus": [
         {
             "type": "link",
-            "text": "EBBS",
+            "text": "BBS",
             "href": "/",
             "class": ""
         }
