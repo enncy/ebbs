@@ -46,7 +46,16 @@
     <%= i18n('_model_.category.description') %> : <input type="text" name="description" class="form-control" required value="<%= locals.body?.description %>">
     <%= i18n('_model_.category.priority') %> : <input type="number" name="priority" class="form-control" required value="<%= locals.body?.priority %>">
     <%= i18n('_model_.category.icon') %> : <input type="text" name="icon" class="form-control" placeholder="https://xxxx" value="<%= locals.body?.icon %>">
-    <%= i18n('_model_.category_group.name') %> : <input type="text" name="add_to_group" class="form-control" value="<%= locals.body?.add_to_group %>">
+    <%= i18ns('_dict_.select','_model_.category_group') %> :
+
+    <select class="form-control" name="add_to_group">
+      <option value="">无</option>
+      <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
+      <% const item = locals.category_groups[i]; %>
+      <option value="<%= item.name %>" <%= item.name === locals.body?.add_to_group ? 'selected' : ''  %>><%= item.name %></option>
+      <% } %>
+    </select>
+
     <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
   </form>
   <%- include('/views/components/dialog.end.ejs')  %>
@@ -55,97 +64,84 @@
 
 
 <!-- 新建分区 -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createGroupModal"><%= i18n('admin.form.category_group.create_new') %>+</button>
+<button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createGroupModal"><%= i18n('admin.form.category_group.create_new') %>+</button>
 
-<hr>
-
-<div>
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col"><%= i18n('_model_.category.name') %></th>
-        <th scope="col"><%= i18n('_model_.category.priority') %></th>
-        <th scope="col"><%= i18n('_dict_.cations') %></th>
-      </tr>
-    </thead>
-
-    <% if (locals.category_groups?.length) { %>
-    <tbody>
-      <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
-      <% const item = locals.category_groups[i]; %>
-      <tr>
-        <td><%= item.name %></td>
-        <td><%= item.priority %></td>
-        <td class="text-end d-flex flex-wrap">
+<div class="mt-2">
+  <% if (locals.category_groups?.length) { %>
+  <div>
+    <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
+    <% const item = locals.category_groups[i]; %>
+    <div class="rounded border p-2 mb-2 ">
+      <div class="d-flex align-items-center">
+        <div class="flex-fill d-flex gap-2 align-items-center">
+          <span>
+            <span title="<%= i18n('_model_.category_group.priority') %>" class="text-secondary">#<%= item.priority %></span>
+          </span>
+          <span title="<%= i18n('_model_.category_group.name') %>">
+            <b><%= item.name %></b>
+          </span>
+        </div>
+        <div class="flex-auto">
           <span onclick="updateGroupModalValue('<%=i%>')">
             <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateGroupModal"><%= i18n('_dict_.modify') %></button>
           </span>
           <a href="/admin/remove-category-group?uid=<%= item.uid %>">
             <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
           </a>
-        </td>
-      </tr>
-      <% } %>
-    </tbody>
-    <% } else { %>
-    <tbody>
-      <tr>
-        <td colspan="4" class="text-center text-secondary"><%= i18n('_dict_.no_data') %></td>
-      </tr>
-    </tbody>
+        </div>
+      </div>
+    </div>
     <% } %>
-  </table>
+  </div>
+  <% } else { %>
+  <div class="p-3 rounded border text-center text-secondary">
+    <%= i18n('_dict_.no_data') %>
+  </div>
+  <% } %>
 </div>
 
 
+<hr class="mb-5 mt-5">
 
 <!-- 新建分区 -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal"><%= i18n('admin.form.category.create_new') %>+</button>
+<button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createModal"><%= i18n('admin.form.category.create_new') %>+</button>
 
-<hr>
+<div class="mt-2">
+  <% if (locals.categories?.length) { %>
+  <% for (let i = 0 ;i < (locals.categories || []).length; i++) {  %>
+  <% const item = locals.categories[i]; %>
+  <div class="rounded border p-2 mb-2 ">
+    <div class="d-flex align-items-center">
+      <div class="flex-fill d-flex gap-2 align-items-center">
+        <span>
+          <span title="<%= i18n('_model_.category.priority') %>" class="text-secondary">#<%= item.priority %></span>
+        </span>
+        <span title="<%= i18n('_model_.category.icon') %>">
+          <img src="<%= item.icon %>" alt="图片" width="48" height="48" class="border">
+        </span>
+        <span>
+          <b title="<%= i18n('_model_.category.name') %>"><%= item.name %></b>
+          <span class="badge text-bg-light"><%= i18n('_model_.category_group') %>：<%= item.group_name || '无' %></span>
+          <small class=" text-secondary" title="<%= i18n('_model_.category.description') %>"><%= item.description %></small>
+        </span>
+      </div>
+      <div class="flex-auto">
+        <span onclick="updateModalValue('<%=i%>')">
+          <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateModal"><%= i18n('_dict_.modify') %></button>
+        </span>
+        <a href="/admin/remove-category?uid=<%= item.uid %>">
+          <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
+        </a>
+      </div>
+    </div>
+  </div>
 
-<div>
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col"><%= i18n('_model_.category.name') %></th>
-        <th scope="col"><%= i18n('_model_.category.description') %></th>
-        <th scope="col"><%= i18n('_model_.category.priority') %></th>
-        <th scope="col"><%= i18n('_model_.category.icon') %></th>
-        <th scope="col"><%= i18n('_model_.category_group.name') %></th>
-        <th scope="col"><%= i18n('_dict_.cations') %></th>
-      </tr>
-    </thead>
-
-    <% if (locals.categories?.length) { %>
-    <tbody>
-      <% for (let i = 0 ;i < locals.categories.length; i++) {  %>
-      <% const item = locals.categories[i]; %>
-      <tr>
-        <td><%= item.name %></td>
-        <td><%= item.description %></td>
-        <td><%= item.priority %></td>
-        <td><%= item.icon || '无' %></td>
-        <td><%= item.group_name || '无' %></td>
-        <td class="text-end d-flex flex-wrap">
-          <span onclick="updateModalValue('<%=i%>')">
-            <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateModal"><%= i18n('_dict_.modify') %></button>
-          </span>
-          <a href="/admin/remove-category?uid=<%= item.uid %>">
-            <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
-          </a>
-        </td>
-      </tr>
-      <% } %>
-    </tbody>
-    <% } else { %>
-    <tbody>
-      <tr>
-        <td colspan="4" class="text-center text-secondary"><%= i18n('_dict_.no_data') %></td>
-      </tr>
-    </tbody>
-    <% } %>
-  </table>
+  <% } %>
+  <% } else { %>
+  <div class="p-3 rounded border text-center text-secondary">
+    <%= i18n('_dict_.no_data') %>
+  </div>
+  <% } %>
 </div>
 
 
@@ -161,6 +157,14 @@
     form.querySelector('input[name="description"]').value = category.description;
     form.querySelector('input[name="priority"]').value = category.priority;
     form.querySelector('input[name="icon"]').value = category.icon;
+
+    const select = form.querySelector('select[name="add_to_group"]'); 
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === category.group_name) {
+        select.options[i].selected = true;
+        break;
+      }
+    }
   }
 
   function updateGroupModalValue(i) {

@@ -57,6 +57,9 @@
     padding: 2px 0px !important;
   }
 
+  .alerts .alert+.alert {
+    margin-top: 8px;
+  }
 
   @media screen and (max-width: 768px) {
     .side {
@@ -75,11 +78,23 @@
 
 <body>
   <%- include('/views/menus') %>
-  <div class="container category-container">
-    <div>
+
+  <div class="container ">
+
+
+    <% if(locals.announcements?.length){ %>
+    <% for(const an of locals.announcements) { %>
+    <%- include('/views/components/announcement.ejs', { announcement:  an }) %>
+    <% } %>
+    <% } %>
+
+    <div class="category-container">
+
+
       <div class="d-flex flex-wrap justify-content-center">
+
         <div style="max-width: 800px;" class="col-lg-8 col-12 me-lg-4 me-0">
-    
+          <!-- 分组 -->
           <% if (locals.category_groups?.length) { %>
           <div class="categorys">
             <% for (let i = 0 ;i < locals.category_groups.length; i++) {  %>
@@ -129,7 +144,8 @@
                 <li class="list-group list-group-item post-list-item ">
                   <a class=" text-dark" href="/u/<%= post.user.account  %>"><%= post.user.nickname || post.user.account %></a>
                   :
-                  <a href="/p/<%= post.short_id %>" class="text-dark text-decoration-none"><%= post.title %></a></li>
+                  <a href="/p/<%= post.short_id %>" class="text-dark text-decoration-none"><%= post.title %></a>
+                </li>
                 <% } %>
               </ul>
               <% } %>

@@ -1,0 +1,92 @@
+<%- include('./index.start.ejs') %>
+
+
+<div id="models">
+  <%- include('/views/components/dialog.start.ejs', { id:'createModal', title: '发布公告' })  %>
+  <form method="post" action="/admin/create-announcement">
+    内容 : <textarea type="text" name="content" class="form-control" required><%= locals.body?.content %></textarea>
+    优先级 : <input type="number" name="priority" class="form-control" required value="<%= locals.body?.priority %>">
+    类型：
+    <%- include('./components/announcement.type.select.ejs', { name: 'type', default_value: locals.body?.type}) %>
+    <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+  </form>
+  <%- include('/views/components/dialog.end.ejs')  %>
+
+
+
+  <%- include('/views/components/dialog.start.ejs', { id:'updateModal', title: '更新公告' })  %>
+  <form method="post" action="/admin/update-announcement">
+    <input type="hidden" name="uid" class="form-control" required value="<%= locals.body?.uid %>">
+    内容 : <textarea type="text" name="content" class="form-control" required><%= locals.body?.content %></textarea>
+    优先级 : <input type="number" name="priority" class="form-control" required value="<%= locals.body?.priority %>">
+    类型：
+    <div>
+      <%- include('./components/announcement.type.select.ejs', { name: 'type', default_value: locals.body?.type}) %>
+    </div>
+    <button type="submit" class="btn btn-primary w-100 mt-3"><%= i18n('_dict_.confirm') %></button>
+  </form>
+  <%- include('/views/components/dialog.end.ejs')  %>
+</div>
+
+<div class="mb-2">
+  <!-- 新建公告 -->
+  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createModal"><%= i18n('admin.form.announcement.create_new') %>+</button>
+
+  <div class="mt-2">
+    <% if (locals.announcements?.length) { %>
+    <div>
+      <% for (let i = 0 ;i < locals.announcements.length; i++) {  %>
+      <% const item = locals.announcements[i]; %>
+      <div class="rounded border p-2 mb-2 ">
+        <div class="d-flex align-items-center">
+          <div class="flex-fill d-flex gap-2 align-items-center">
+            <span>
+              <span title="<%= i18n('_model_.announcement.priority') %>" class="text-secondary">#<%= item.priority %></span>
+            </span>
+            <span title="<%= i18n('_model_.announcement') %>">
+              <%- include('/views/components/announcement.ejs', { announcement:  item }) %>
+            </span>
+          </div>
+          <div class="flex-auto">
+            <span onclick="updateModalValue('<%=i%>')">
+              <button class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#updateModal"><%= i18n('_dict_.modify') %></button>
+            </span>
+            <a href="/admin/remove-announcement?uid=<%= item.uid %>">
+              <button type="submit" class="btn btn-danger  btn-sm"><%= i18n('_dict_.delete') %></button>
+            </a>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } else { %>
+    <div class="p-3 rounded border text-center text-secondary">
+      <%= i18n('_dict_.no_data') %>
+    </div>
+    <% } %>
+  </div>
+
+</div>
+
+
+<script>
+  const announcements = JSON.parse(decodeURI(`<%-encodeURI(JSON.stringify(locals.announcements))%>`));
+
+  function updateModalValue(i) {
+    const announcement = announcements[i];
+    var form = document.querySelector('#updateModal');
+    form.querySelector('input[name="uid"]').value = announcement.uid;
+    form.querySelector('textarea[name="content"]').value = announcement.content;
+    form.querySelector('input[name="priority"]').value = announcement.priority;
+
+    const typeSelect = form.querySelector('select[name="type"]');
+    for (let i = 0; i < typeSelect.options.length; i++) {
+      if (typeSelect.options[i].value === announcement.type) {
+        typeSelect.options[i].selected = true;
+        break;
+      }
+    }
+  }
+</script>
+
+<%- include('./index.end.ejs') %>

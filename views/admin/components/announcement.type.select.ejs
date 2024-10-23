@@ -1,0 +1,6 @@
+ <select class="form-control" name="<%= name %>"> 
+   <option <%= default_value === 'info' ? 'selected' : '' %> value="info">信息</option>
+   <option <%= default_value === 'warning' ? 'selected' : '' %> value="warning">警告</option>
+   <option <%= default_value === 'danger' ? 'selected' : '' %> value="danger">危险</option>
+   <option <%= default_value === 'success' ? 'selected' : '' %> value="success">成功</option>
+ </select>

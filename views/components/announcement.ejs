@@ -1,0 +1,13 @@
+<% 
+const an = locals.announcement;
+const type = an.type === 'info' ? 'primary' : an.type === 'warning' ? 'warning' : an.type === 'danger' ? 'danger' :  an.type === 'success' ? 'success' : 'unknown';
+const icon = an.type  === 'info' ? 'info-circle' : an.type  === 'warning' ? 'exclamation-triangle' : an.type  === 'danger' ? 'exclamation-circle' : an.type  === 'success' ? 'check-circle' : 'unknown';
+%>
+<div class="mt-2 mb-2 alerts">
+  <div class="alert alert-<%= type %> d-flex align-items-center" role="alert">
+    <i class="bi bi-<%= icon %>-fill me-2"></i>
+    <div>
+      <div><%= an.content %></div>
+    </div>
+  </div>
+</div>

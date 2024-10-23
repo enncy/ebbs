@@ -15,9 +15,18 @@
 </div>
 
 <div class="mb-2">
-  <% for(const user of users){ %>
-  <%- include('./components/user.card.ejs', {user}) %>
+  <% if (locals.users?.length) { %>
+  <div>
+    <% for(const user of users){ %>
+    <%- include('./components/user.card.ejs', {user}) %>
+    <% } %>
+  </div>
+  <% }else{ %>
+  <div class="p-3 rounded border text-center text-secondary">
+    <%= i18n('_dict_.no_data') %>
+  </div>
   <% } %>
+
 </div>
 
 <div>

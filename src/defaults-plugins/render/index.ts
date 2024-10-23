@@ -19,6 +19,7 @@ import { statistic } from "./statistic";
 import { notify } from "./notify";
 import { Request, Response } from "express";
 import { UserAttachment } from "src/utils/file";
+import { AnnouncementDocument } from "src/models/announcements";
 
 export class UserPreCreatePostEvent extends CancellableEvent {
     constructor(public user: UserDocument, public params: PostCreateParams) {
@@ -99,7 +100,8 @@ definePlugin({
             })),
             newest_comments: await Promise.all((await CommentModel.find().sort({ create_at: -1 }).limit(10)).map(async c => {
                 return { ...c.toJSON(), user: await UserDocument.findOne({ uid: c.user_uid }) }
-            }))
+            })),
+            announcements: await AnnouncementDocument.list()
         }
     })
 
