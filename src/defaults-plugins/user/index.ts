@@ -53,6 +53,14 @@ definePlugin({
             return plugin.sendError(req, res, 404)
         }
 
+        if (find_account.deleted) {
+            return plugin.sendError(req, res, 404, '用户已注销')
+        }
+
+        if (find_account.banned) {
+            return plugin.sendError(req, res, 403, '用户已被封禁')
+        }
+
         const size = global_config.user.pagination.size
         let page_value = parseInt(page!)
         if (isNaN(page_value)) {
@@ -60,8 +68,8 @@ definePlugin({
         }
         let total_page = 0
         let posts: PostDocument[] = []
-        let fans: UserDocument[] = []
-        let follows: UserDocument[] = []
+        let fans: (UserDocument | null)[] = []
+        let follows: (UserDocument | null)[] = []
 
         if (show === 'posts') {
             const post_docs = await PostDocument.list({ user_uid: find_account.uid }, { page: page_value, size: size })
@@ -71,11 +79,17 @@ definePlugin({
             total_page = Math.ceil(await PostDocument.countByUser(find_account.uid) / size)
         }
         else if (show === 'fans') {
-            fans = await UserFollowUserDocument.list({ target_uid: find_account.uid }, page_value, size)
+            const records = await UserFollowUserDocument.list({ target_uid: find_account.uid }, page_value, size)
+            fans = await Promise.all(records.map(async r => {
+                return await UserDocument.findOne({ uid: r.user_uid })
+            }))
             total_page = Math.ceil(await UserFollowUserDocument.count({ target_uid: find_account.uid }) / size)
         }
         else if (show === 'follows') {
-            follows = await UserFollowUserDocument.list({ user_uid: find_account.uid }, page_value, size)
+            const records = await UserFollowUserDocument.list({ user_uid: find_account.uid }, page_value, size)
+            follows = await Promise.all(records.map(async r => {
+                return await UserDocument.findOne({ uid: r.target_uid })
+            }))
             total_page = Math.ceil(await UserFollowUserDocument.count({ user_uid: find_account.uid }) / size)
         }
         let followed = false;

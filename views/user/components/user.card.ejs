@@ -3,9 +3,10 @@
     background-color: #f7f7f7;
   }
 </style>
-  
-<div class="rounded border p-1 mb-2 user-list-item">
+
+<div class=" rounded border p-1 mb-2 user-list-item">
   <div class="d-flex align-items-center">
+    <% if(user){ %>
     <div class="flex-fill d-flex gap-2 align-items-center">
       <span>
         <img src="<%= user.avatar || '/assets/default_avatar.png' %>" alt="<%= user.account %>" width="48" height="48" class="rounded-circle border">
@@ -31,5 +32,10 @@
       <a href="/u/<%= user.account %>" target="_blank"><button type="button" class="btn btn-sm btn-primary">主页</button></a>
       </form>
     </div>
+    <% }else{ %>
+    <div>
+      无效用户
+    </div>
+    <% } %>
   </div>
 </div>

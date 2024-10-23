@@ -138,6 +138,11 @@ const href_template = `/u/${account.account}?show=${ locals.query.show || 'index
           <div class="p-3 pt-0">
 
             <div class="info">
+              <% if(user.permissions.includes('admin')){ %>
+              <div>
+                UID：<%=  account.uid  %>
+              </div>
+              <% } %>
               <div>
                 主页链接：<a id="user-link" href="/u/<%= account.account %>"> </a>
               </div>
