@@ -11,7 +11,7 @@
 </div>
 
 <div class="ps-1 mb-2">
-  <small>共 <%= users.length %> 个用户</small>
+  <small>共 <%= locals.total_count %> 个用户</small>
 </div>
 
 <div class="mb-2">
@@ -21,9 +21,7 @@
 </div>
 
 <div>
-  
   <%- include('/views/components/pagination.ejs', {total_count: locals.total_count, current: locals.query.page || '1', href_template: `/admin/user-manager?page={{page}}`  }) %>
-
 </div>
 
 <%- include('./index.end.ejs') %>
