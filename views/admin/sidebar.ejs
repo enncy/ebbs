@@ -32,7 +32,9 @@ const active = sidebars.find(s => s.path === locals.req.path)?.name || 'category
     color: black !important;
   }
 </style>
-<div class="list-group">
+
+
+<div class="list-group mb-lg-0 mb-3">
   <% for (const element of sidebars) { %>
   <a class="list-group-item  text-decoration-none " <%= active === element.name ? 'active' : '' %> href="<%= element.path %>">
     <div class="cursor-pointer"> <%= i18n(element.lang) %> </div>
