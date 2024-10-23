@@ -133,7 +133,7 @@ const href_template = `/u/${account.account}?show=${ locals.query.show || 'index
         <div class="user-profile">
           <div class="user-actions p-2 text-end">
             <a href="/user/toggle-follow?account=<%= account.account %>" class="btn btn-sm btn-<%= locals.followed ? 'outline-danger' : 'primary' %> ps-3 pe-3"><%= locals.followed ? '取关 x' : '关注 +' %></a>
-            <a href="/user/report?account=<%= account.account %>" class="btn btn-sm btn-outline-secondary">举报 !</a>
+            <a href="/user/report?account=<%= account.account %>" class="btn btn-sm btn-outline-secondary">举报 <i class="bi bi-info-circle"></i></a>
           </div>
           <div class="p-3 pt-0">
 

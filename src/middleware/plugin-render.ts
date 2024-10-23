@@ -28,9 +28,9 @@ export default (pages: Page[]): RequestHandler => {
             logger.error(e)
             if (res.headersSent) {
                 return
-            } 
+            }
             res.statusCode = 500
-            res.end()
+            res.send(e.message)
         }
     }
 }

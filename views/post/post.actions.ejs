@@ -1,22 +1,22 @@
 <div class="d-flex gap-2 actions">
   <div class="d-flex gap-2">
     <% if(post.user.uid === locals.user?.uid){ %>
-    <a class="action" href="/post/editor?category_uid=<%= post.category_uid %>&pid=<%= post.short_id %>"><small> 编辑 </small></a>
+    <a class="action" href="/post/editor?category_uid=<%= post.category_uid %>&pid=<%= post.short_id %>"><small>  <i class="bi bi-pencil-fill"></i> 编辑</small></a>
     <% }else{ %>
 
 
     <% if(post.collected){ %>
-    <a class="action collect-action text-decoration-none " onclick="togglePostCollect('not-collect','<%= post.short_id %>','<%= post.uid %>')"><small class="collect-button text-secondary"> 已收藏 </small></a>
+    <a class="action collect-action text-decoration-none " onclick="togglePostCollect('not-collect','<%= post.short_id %>','<%= post.uid %>')"><small class="collect-button text-secondary"> <i class="bi bi-star-fill"></i> 已收藏 </small></a>
     <% }else{ %>
-    <a class="action collect-action" onclick="togglePostCollect('collect','<%= post.short_id %>','<%= post.uid %>')"><small class="collect-button"> 收藏 </small></a>
+    <a class="action collect-action" onclick="togglePostCollect('collect','<%= post.short_id %>','<%= post.uid %>')"><small class="collect-button"> <i class="bi bi-star"></i> 收藏 </small></a>
     <% } %>
 
     <small class="split"> | </small>
-    <a class="action" href="#"><small> 举报 </small></a>
+    <a class="action" href="#"><small> <i class="bi bi-info-circle"></i> 举报 </small></a>
     <% } %>
   </div>
   <% if(post.last_edit_at){ %>
   <small class="split"> | </small>
-  <small class=" text-secondary" title="<%= dayjs(post.last_edit_at) %>"> 最后编辑于：<%= unit.timeFrom(post.last_edit_at) %></small>
+  <small class=" text-secondary" title="<%= dayjs(post.last_edit_at) %>"> <i class="bi bi-clock"></i> 最后编辑于：<%= unit.timeFrom(post.last_edit_at) %></small>
   <% } %>
 </div>

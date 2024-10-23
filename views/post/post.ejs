@@ -26,11 +26,15 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
   }
 
   .breadcrumbs {
-    display: flex
+    display: flex;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    overflow: hidden;
   }
 
   .breadcrumb a {
     color: #1b6091 !important;
+    text-decoration: none;
   }
 
 
@@ -59,13 +63,16 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
   }
 
   .user-account {
-    width: 160px; 
+    width: 160px;
     font-weight: bold;
   }
 
   a.action {
     color: #4d4d4d !important;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
   }
 
   .post-content img,
@@ -222,18 +229,18 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
         <!-- 导航栏 -->
         <div class="post-menus d-flex p-2 ps-lg-4 pe-lg-4 align-items-center ">
           <div class="flex-fill">
-            <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
-              <ol class="breadcrumb m-0">
+            <div class=" d-flex flex-nowrap" aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+              <ol class="breadcrumb breadcrumbs m-0">
                 <li class="breadcrumb-item"><a href="/">首页</a></li>
                 <li class="breadcrumb-item"><a href="/category?id=<%= category.short_id %>"><%= category.name %></a></li>
                 <li class="breadcrumb-item active" aria-current="page"><a href="/p/<%= post.short_id %>"><%= post.title.length > 10 ?  post.title.slice(0,10) + '...' :  post.title %></a></li>
               </ol>
-            </nav>
+            </div>
           </div>
 
-          <div class="flex-auto">
+          <div class="flex-auto text-nowrap">
             <button type="button" onclick="back()" class="btn btn-sm btn-outline-primary">
-              <%= i18n('_dict_.back_to_previous_page') %>
+              <i class="bi bi-arrow-left"></i> <%= i18n('_dict_.back_to_previous_page') %>
             </button>
 
           </div>
@@ -262,7 +269,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                   <div class="text-dark  user-account"><%= post.user.nickname || post.user.account %></div>
                 </a>
 
-                <div class=" d-flex d-lg-block gap-3"> 
+                <div class=" d-flex d-lg-block gap-3">
                   <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= unit.count(post.user.statistics.posts) %></small></div>
                   <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= unit.count(post.user.statistics.fans)  %></small></div>
                 </div>
@@ -287,7 +294,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                 <% if(post.tags?.length){ %>
                 <div class="tag-list text-secondary">
                   <% for(const tag of post.tags){ %>
-                  <span class="tag  me-1">#<%= tag %></span>
+                  <span class="tag  me-1"><i class="bi bi-tag"></i><%= tag %></span>
                   <% } %>
                 </div>
                 <% } %>
@@ -325,7 +332,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
                 <a class="flex-fill text-decoration-none" href="/u/<%=comment.user.account  %>" target="_blank">
                   <div class="text-dark  user-account"><%= comment.user.nickname || comment.user.account %></div>
                 </a>
-                <div class="pe-3 pe-lg-0 d-flex d-lg-block gap-3"> 
+                <div class="pe-3 pe-lg-0 d-flex d-lg-block gap-3">
                   <div class="d-inline-block d-lg-block text-secondary"><small>帖子：<%= unit.count(post.user.statistics.posts) %></small></div>
                   <div class="d-inline-block d-lg-block text-secondary"><small>粉丝：<%= unit.count(post.user.statistics.fans) %></small></div>
                 </div>
@@ -344,17 +351,17 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
               <div class="pb-1 col-12">
                 <hr class="mb-2 mt-2 secondary">
                 <div class="d-flex align-items-center gap-2 actions">
-                  <div class="d-flex gap-2">
-                    <a class="action" href="/p/<%= post.short_id %>?p=<%= locals.query.p || '1' %>#<%= comment.short_id.slice(0,6) %>"><small> # </small></a>
-                    <a class="action" onclick="reply('<%= comment.uid %>','<%= comment.user.account %>','<%= comment.text %>')"><small> 回复 </small></a>
+                  <div class="d-flex gap-3">
+                    <a class="action text-decoration-underline" href="/p/<%= post.short_id %>?p=<%= locals.query.p || '1' %>#<%= comment.short_id.slice(0,6) %>"><small> # </small></a>
+                    <a class="action" onclick="reply('<%= comment.uid %>','<%= comment.user.account %>','<%= comment.text %>')"><small> <i class="bi bi-chat-dots"></i></i> 回复 </small></a>
 
 
                     <small class="split"> | </small>
 
-                    <a class="action" href="#"><small> 举报 </small></a>
+                    <a class="action" href="#"><small> <i class="bi bi-info-circle"></i> 举报 </small></a>
 
                     <% if(comment.user.uid === locals.user?.uid){ %>
-                    <a class="action" onclick="removeComment('<%= comment.short_id %>')"><small> 删除 </small></a>
+                    <a class="action" onclick="removeComment('<%= comment.short_id %>')"><small> <i class="bi bi-trash"></i> 删除 </small></a>
                     <% } %>
 
 
@@ -397,7 +404,7 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
 
                 <% if(locals.user ){ %>
                 <div class="text-end">
-                  <button type="button" onclick="JoditUtils.submitComment('#post-page-editor')" class="btn btn-primary mt-2 " style="width: 128px;"><%= i18n('_dict_.post') %> </button>
+                  <button type="button" onclick="JoditUtils.submitComment('#post-page-editor')" class="btn btn-primary mt-2 " style="width: 128px;"> <i class="bi bi-chat-dots"></i> <%= i18n('_dict_.post') %> </button>
                 </div>
                 <% } %>
               </form>
@@ -470,11 +477,11 @@ const href_template =  `/p/${post.short_id}?p={{page}}`
         const a = document.querySelector(`.main-content .collect-action`)
 
         if (action === 'collect') {
-          el.textContent = '已收藏';
+          el.innerHTML = '<i class="bi bi-star-fill"></i> 已收藏';
           el.title = '再次点击-取消收藏';
           a.setAttribute('onclick', `togglePostCollect('not-collect','${pid}', '${uid}')`);
         } else {
-          el.textContent = '收藏';
+          el.innerHTML = '<i class="bi bi-star"></i> 收藏';
           a.setAttribute('onclick', `togglePostCollect('collect','${pid}', '${uid}')`);
         }
         el.classList.toggle('text-secondary');

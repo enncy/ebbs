@@ -48,42 +48,17 @@
 
           <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
             <img src="<%= locals.user.avatar || '/assets/default_avatar.png' %>" alt="<%= locals.user.account %>" width="32" height="32" class="rounded-circle">
-            <span><%= locals.user.account || 'undefined' %></span>
+            <span><%=  locals.user.nickname || locals.user.account || 'undefined' %></span>
             <% if(locals.notify_count){ %>
             <span class="badge text-bg-danger"><%= locals.notify_count %></span>
             <% } %>
           </a>
 
-          <ul class="dropdown-menu text-small">
-            <li><a class="dropdown-item" href="/u/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
-            <li><a class="dropdown-item" href="/user/settings"><%= i18n('_dict_.personal_setting') %></a></li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="/user/notifies">通知
-                <% if(locals.notify_count){ %>
-                <span class="badge text-bg-danger"><%= locals.notify_count %></span>
-                <% } %>
-              </a>
-            </li>
-            <li><a class="dropdown-item" href="/user/collects">收藏</a></li>
-            <li><a class="dropdown-item" href="/user/drafts"><%= i18n('_dict_.draft') %></a></li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li><a class="dropdown-item" href="/passport/logout"><%= i18n('_dict_.logout') %></a></li>
-          </ul>
+
+          <%- include('/views/components/user.menus.ejs') %>
+
           <% }else{ %>
-          <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>
-              <%= i18n('_dict_.no_login') %>
-            </span>
-          </a>
-          <ul class="dropdown-menu text-small">
-            <li><a class="dropdown-item" href="/passport/login"><%= i18n('_dict_.login') %></a></li>
-            <li><a class="dropdown-item" href="/passport/register"><%= i18n('_dict_.register') %></a></li>
-          </ul>
+          <%- include('/views/components/user.menus.nologin.ejs') %>
           <% } %>
         </div>
       </div>
@@ -117,36 +92,11 @@
             <% } %>
           </a>
 
-          <ul class="dropdown-menu text-small">
-            <li><a class="dropdown-item" href="/u/<%= locals.user.account %>"><%= i18n('_dict_.personal_page') %></a></li>
-            <li><a class="dropdown-item" href="/user/settings"><%= i18n('_dict_.personal_setting') %></a></li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="/user/notifies">通知
-                <% if(locals.notify_count){ %>
-                <span class="badge text-bg-danger"><%= locals.notify_count %></span>
-                <% } %>
-              </a>
-            </li>
-            <li><a class="dropdown-item" href="/user/collects">收藏</a></li>
-            <li><a class="dropdown-item" href="/user/drafts"><%= i18n('_dict_.draft') %></a></li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li><a class="dropdown-item" href="/passport/logout"><%= i18n('_dict_.logout') %></a></li>
-          </ul>
+
+          <%- include('/views/components/user.menus.ejs') %>
+
           <% }else{ %>
-          <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>
-              <%= i18n('_dict_.no_login') %>
-            </span>
-          </a>
-          <ul class="dropdown-menu text-small">
-            <li><a class="dropdown-item" href="/passport/login"><%= i18n('_dict_.login') %></a></li>
-            <li><a class="dropdown-item" href="/passport/register"><%= i18n('_dict_.register') %></a></li>
-          </ul>
+          <%- include('/views/components/user.menus.nologin.ejs') %>
           <% } %>
 
           <div class="offcanvas offcanvas-start " style="width: 300px" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">

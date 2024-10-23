@@ -1,0 +1,21 @@
+<ul class="dropdown-menu text-small">
+  <li><a class="dropdown-item" href="/u/<%= locals.user.account %>"><i class="bi bi-person-circle"></i> <%= i18n('_dict_.personal_page') %></a></li>
+  <li><a class="dropdown-item" href="/user/settings"> <i class="bi bi-gear"></i> <%= i18n('_dict_.personal_setting') %></a></li>
+  <li>
+    <hr class="dropdown-divider">
+  </li>
+  <li>
+    <a class="dropdown-item" href="/user/notifies">
+      <i class="bi bi-bell"></i> 通知
+      <% if(locals.notify_count){ %>
+      <span class="badge text-bg-danger"><%= locals.notify_count %></span>
+      <% } %>
+    </a>
+  </li>
+  <li><a class="dropdown-item" href="/user/collects"><i class="bi bi-star"></i> 收藏</a></li>
+  <li><a class="dropdown-item" href="/user/drafts"><i class="bi bi-file-earmark"></i> <%= i18n('_dict_.draft') %></a></li>
+  <li>
+    <hr class="dropdown-divider">
+  </li>
+  <li><a class="dropdown-item" href="/passport/logout"><i class="bi bi-box-arrow-right"></i> <%= i18n('_dict_.logout') %></a></li>
+</ul>
