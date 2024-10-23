@@ -31,6 +31,12 @@
         <span class="badge text-bg-primary">管理员</span>
         <% } %>
       </span>
+
+      <span>
+        <span class="badge text-bg-light">帖子：<%= user.statistics.posts %></span>
+        <span class="badge text-bg-light">关注：<%= user.statistics.follows %></span>
+        <span class="badge text-bg-light">粉丝：<%= user.statistics.fans %></span>
+      </span>
     </div>
 
     <div class="flex-auto">

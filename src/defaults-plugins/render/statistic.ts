@@ -6,6 +6,7 @@ import { UserModel } from 'src/models/user';
 import { CategoryModel } from 'src/models/category';
 import { PostDocument, PostModel } from 'src/models/post';
 import { UserCollectPostDocument } from 'src/models/state/user.collect.post';
+import { UserFollowUserEvent, UserUnFollowUserEvent } from '../user';
 
 
 export function statistic(plugin: Plugin) {
@@ -43,4 +44,20 @@ export function statistic(plugin: Plugin) {
     plugin.on(UserCollectPostEvent, async e => {
         await PostModel.updateOne({ uid: e.post_uid }, { $inc: { 'statistics.collects': 1 } })
     })
+
+
+    /**
+     * 关注和被关注统计
+     */
+
+    plugin.on(UserFollowUserEvent, async e => {
+        await UserModel.updateOne({ uid: e.user_uid }, { $inc: { 'statistics.follows': 1 } })
+        await UserModel.updateOne({ uid: e.target_uid }, { $inc: { 'statistics.fans': 1 } })
+    })
+ 
+    plugin.on(UserUnFollowUserEvent, async e => {
+        await UserModel.updateOne({ uid: e.user_uid }, { $inc: { 'statistics.follows': -1 } })
+        await UserModel.updateOne({ uid: e.target_uid }, { $inc: { 'statistics.fans': -1 } })
+    })
+
 }

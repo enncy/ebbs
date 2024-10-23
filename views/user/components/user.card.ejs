@@ -1,0 +1,35 @@
+<style>
+  .user-list-item:hover {
+    background-color: #f7f7f7;
+  }
+</style>
+  
+<div class="rounded border p-1 mb-2 user-list-item">
+  <div class="d-flex align-items-center">
+    <div class="flex-fill d-flex gap-2 align-items-center">
+      <span>
+        <img src="<%= user.avatar || '/assets/default_avatar.png' %>" alt="<%= user.account %>" width="48" height="48" class="rounded-circle border">
+      </span>
+      <span>
+        <span><%= user.account + (user.nickname ? `(${user.nickname})` : '') %></span>
+      </span>
+
+      <span>
+        <% if(user.permissions.includes('admin')){ %>
+        <span class="badge text-bg-primary">管理员</span>
+        <% } %>
+      </span>
+
+      <span>
+        <span class="badge text-bg-light">帖子：<%= user.statistics.posts %></span>
+        <span class="badge text-bg-light">关注：<%= user.statistics.follows %></span>
+        <span class="badge text-bg-light">粉丝：<%= user.statistics.fans %></span>
+      </span>
+    </div>
+
+    <div class="flex-auto">
+      <a href="/u/<%= user.account %>" target="_blank"><button type="button" class="btn btn-sm btn-primary">主页</button></a>
+      </form>
+    </div>
+  </div>
+</div>

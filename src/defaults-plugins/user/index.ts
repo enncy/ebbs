@@ -1,18 +1,29 @@
 import { global_config } from "ebbs.config";
 import { definePlugin } from "src/core/plugins";
 import { PostDocument, PostModel } from "src/models/post";
-import { UserFollowUserDocument } from "src/models/state/user.follow.user";
+import { UserFollowUserDocument, UserFollowUserModel } from "src/models/state/user.follow.user";
 import { UserDocument, UserModel } from "src/models/user";
 import { hasBlankParams } from "src/utils";
 import { PassportPlugin, permission } from "../passport";
 import { NotifyDocument, NotifyModel, NotifyType } from "src/models/notify";
-import { CommentDocument } from "src/models/comment";
 import { sendCommentRedirect } from "../render";
 import { UserCollectPostDocument } from "src/models/state/user.collect.post";
 import { UserAttachment } from "src/utils/file";
 import { ViewRenderEvent } from "src/events/page";
+import { CancellableEvent, Event } from "src/core/interfaces";
 
 
+export class UserFollowUserEvent extends CancellableEvent {
+    constructor(public user_uid: string, public target_uid: string) {
+        super();
+    }
+}
+
+export class UserUnFollowUserEvent extends CancellableEvent {
+    constructor(public user_uid: string, public target_uid: string) {
+        super();
+    }
+}
 
 
 definePlugin({
@@ -311,7 +322,21 @@ definePlugin({
         if (!target) {
             return plugin.sendError(req, res, 404)
         }
-        await UserFollowUserDocument.toggle(user, target)
+        if (await UserFollowUserDocument.isFollowing(user, target)) {
+            const e = new UserUnFollowUserEvent(user.uid, target.uid)
+            await plugin.emit(e)
+            if (e.isCancelled()) {
+                return plugin.sendError(req, res, 403, e.reason)
+            }
+            await UserFollowUserModel.deleteOne({ user_uid: user.uid, target_uid: target.uid })
+        } else {
+            const e = new UserFollowUserEvent(user.uid, target.uid)
+            await plugin.emit(e)
+            if (e.isCancelled()) {
+                return plugin.sendError(req, res, 403, e.reason)
+            }
+            await UserFollowUserModel.create({ user_uid: user.uid, target_uid: target.uid })
+        }
         return res.redirect(`/u/${target_account}`)
     })
 

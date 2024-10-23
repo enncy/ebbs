@@ -168,16 +168,12 @@ const href_template = `/u/${account.account}?show=${ locals.query.show || 'index
             </div>
 
 
-            <div>
+            <div class="mt-2">
               <% if(locals.query.show === 'posts'){ %>
               <% if(!locals.posts || locals.posts.length === 0){ %>
               <div class="empty">暂无数据</div>
               <% }else{ %>
               <div>
-                <div class="mt-2">
-                  <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
-                </div>
-
                 <div>
                   <%- include('/views/components/post.list.ejs', {posts: locals.posts }) %>
                 </div>
@@ -191,18 +187,16 @@ const href_template = `/u/${account.account}?show=${ locals.query.show || 'index
             </div>
 
 
-            <div>
+            <div class="mt-2">
               <% if(locals.query.show === 'follows'){ %>
               <% if(!locals.follows || locals.follows.length === 0){ %>
               <div class="empty">暂无数据</div>
               <% }else{ %>
               <div>
-                <div class="mt-2">
-                  <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
-                </div>
-
                 <div>
-                  <%= follows.length %>
+                  <% for(const user of follows){ %>
+                  <%- include('./components/user.card.ejs', {user}) %>
+                  <% } %>
                 </div>
 
                 <div class="mt-2">
@@ -214,18 +208,16 @@ const href_template = `/u/${account.account}?show=${ locals.query.show || 'index
             </div>
 
 
-            <div>
+            <div class="mt-2">
               <% if(locals.query.show === 'fans'){ %>
               <% if(!locals.fans || locals.fans.length === 0){ %>
               <div class="empty">暂无数据</div>
               <% }else{ %>
               <div>
-                <div class="mt-2">
-                  <%- include('/views/components/pagination.ejs',{ total_page: locals.total_page, current: locals.query?.p || '1' , href_template: href_template}) %>
-                </div>
-
                 <div>
-                  <%= fans.length %>
+                  <% for(const user of fans){ %>
+                  <%- include('./components/user.card.ejs', {user}) %>
+                  <% } %>
                 </div>
 
                 <div class="mt-2">
