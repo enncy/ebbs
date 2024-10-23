@@ -29,7 +29,8 @@ export default (pages: Page[]): RequestHandler => {
             if (res.headersSent) {
                 return
             } 
-            res.sendStatus(500)
+            res.statusCode = 500
+            res.end()
         }
     }
 }
