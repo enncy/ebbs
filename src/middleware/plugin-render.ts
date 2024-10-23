@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { Page } from "../core/interfaces";
+import { logger } from "src/app";
 
 export default (pages: Page[]): RequestHandler => {
     return async (req, res, next) => {
@@ -13,14 +14,22 @@ export default (pages: Page[]): RequestHandler => {
             next()
             return
         }
-        const html = await page.render(req, res)
-        if (res.headersSent) {
-            return
+        try {
+            const html = await page.render(req, res)
+            if (res.headersSent) {
+                return
+            }
+            if (!html) {
+                next()
+                return
+            }
+            res.send(html)
+        } catch (e) {
+            logger.error(e)
+            if (res.headersSent) {
+                return
+            } 
+            res.sendStatus(500)
         }
-        if (!html) {
-            next()
-            return
-        }
-        res.send(html)
     }
 }
